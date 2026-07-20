@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fixonaut-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fixonaut
+      POSTGRES_USER: fixonaut_app
+      POSTGRES_PASSWORD: fixonaut_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - fixonaut-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fixonaut_app -d fixonaut"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  fixonaut-postgres-data:
