@@ -94,6 +94,12 @@ function CustomerDetailPage() {
         </div>
 
         <div className="flex gap-3">
+          <Link
+            to={`/customers/${customer.id}/edit`}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
+          >
+            Edit
+          </Link>
           {customer.active && (
             <Button
               type="button"

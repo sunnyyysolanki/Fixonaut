@@ -15,6 +15,7 @@ import ServiceRequestsPage from "@/pages/ServiceRequestsPage";
 import TechniciansPage from "@/pages/TechniciansPage";
 import CreateCustomerPage from "@/pages/CreateCustomerPage";
 import CustomerDetailPage from "@/pages/CustomerDetailPage";
+import EditCustomerPage from "@/pages/EditCustomerPage";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
       {
         path: "customers/new",
         element: <CreateCustomerPage />,
+      },
+      {
+        path: "customers/:customerId/edit",
+        element: <EditCustomerPage />,
       },
       {
         path: "customers/:customerId",
