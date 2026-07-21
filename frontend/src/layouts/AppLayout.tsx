@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+
+import { Button } from "@/components/ui/Button";
+import { useAuthStore } from "@/stores/auth-store";
 
 const navigation = [
   { label: "Dashboard", path: "/dashboard" },
@@ -49,12 +52,42 @@ function Brand() {
   );
 }
 
+function UserSummary({ name, email }: { name: string; email: string }) {
+  const initial = name.charAt(0).toUpperCase();
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
+        {initial}
+      </div>
+
+      <div className="hidden min-w-0 sm:block">
+        <p className="truncate text-sm font-medium text-white">{name}</p>
+
+        <p className="max-w-48 truncate text-xs text-slate-500">{email}</p>
+      </div>
+    </div>
+  );
+}
+
 export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const user = useAuthStore((state) => state.user);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   function closeMobileMenu() {
     setMobileMenuOpen(false);
   }
+
+  function handleLogout() {
+    clearAuth();
+    navigate("/login", { replace: true });
+  }
+
+  const userName = user?.name ?? "User";
+  const userEmail = user?.email ?? "";
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
@@ -76,8 +109,26 @@ export function AppLayout() {
             <Brand />
           </div>
 
-          <div className="hidden text-sm text-slate-400 sm:block">
-            Demo Organization
+          <div className="flex items-center gap-3">
+            {user && <UserSummary name={userName} email={userEmail} />}
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="hidden sm:inline-flex"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-300 hover:bg-slate-800 hover:text-white sm:hidden"
+              onClick={handleLogout}
+              aria-label="Logout"
+            >
+              ↪
+            </button>
           </div>
         </div>
       </header>
@@ -118,6 +169,17 @@ export function AppLayout() {
           </div>
 
           <NavigationLinks onNavigate={closeMobileMenu} />
+
+          <div className="mt-8 border-t border-slate-800 pt-4 sm:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </div>
         </aside>
 
         <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
