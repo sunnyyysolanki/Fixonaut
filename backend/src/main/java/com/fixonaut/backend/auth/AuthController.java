@@ -35,4 +35,13 @@ public class AuthController {
                 .created(location)
                 .body(response);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return ResponseEntity.ok(
+                authenticationService.login(request)
+        );
+    }
 }
