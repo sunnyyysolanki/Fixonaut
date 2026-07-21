@@ -3,11 +3,10 @@ package com.fixonaut.backend.auth;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.net.URI;
 
@@ -18,6 +17,7 @@ public class AuthController {
 
     private final RegistrationService registrationService;
     private final AuthenticationService authenticationService;
+    private final CurrentUserService currentUserService;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
@@ -43,6 +43,16 @@ public class AuthController {
     ) {
         LoginResponse response =
                 authenticationService.login(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AuthenticatedUserResponse> getCurrentUser(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        AuthenticatedUserResponse response =
+                currentUserService.getCurrentUser(jwt.getSubject());
 
         return ResponseEntity.ok(response);
     }
