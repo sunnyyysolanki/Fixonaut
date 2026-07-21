@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCustomers } from "@/features/customers/api/use-customers";
+import { Link } from "react-router-dom";
 
 function CustomersPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -28,29 +29,7 @@ function CustomersPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-orange-400">Operations</p>
-
-          <h1 className="mt-1 text-3xl font-bold text-white">Customers</h1>
-
-          <p className="mt-2 text-slate-400">
-            Manage customers and their service history.
-          </p>
-        </div>
-
-        <div className="w-full lg:max-w-sm">
-          <Input
-            label="Search customers"
-            placeholder="Search by name or phone..."
-            value={searchInput}
-            onChange={(event) => handleSearchChange(event.target.value)}
-          />
-        </div>
-      </header>
-
       {isLoading && <CustomersLoading />}
-
       {isError && (
         <Card>
           <CardContent className="py-10 text-center">
@@ -64,7 +43,6 @@ function CustomersPage() {
           </CardContent>
         </Card>
       )}
-
       {!isLoading && !isError && customers.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center">
@@ -80,7 +58,6 @@ function CustomersPage() {
           </CardContent>
         </Card>
       )}
-
       {!isLoading && !isError && customers.length > 0 && (
         <>
           <CustomerDesktopTable customers={customers} />

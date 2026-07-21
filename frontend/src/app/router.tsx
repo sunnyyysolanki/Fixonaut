@@ -13,6 +13,7 @@ import InvoicesPage from "@/pages/InvoicesPage";
 import LoginPage from "@/pages/LoginPage";
 import ServiceRequestsPage from "@/pages/ServiceRequestsPage";
 import TechniciansPage from "@/pages/TechniciansPage";
+import CreateCustomerPage from "@/pages/CreateCustomerPage";
 
 const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: "customers",
         element: <CustomersPage />,
+      },
+      {
+        path: "customers/new",
+        element: <CreateCustomerPage />,
       },
       {
         path: "service-requests",
