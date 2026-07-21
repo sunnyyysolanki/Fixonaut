@@ -1,25 +1,7 @@
-import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api-client";
-
-type HealthResponse = {
-  status: string;
-  service: string;
-};
+import { useHealth } from "@/features/health/api/use-health";
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    apiClient
-      .get<HealthResponse>("/health")
-      .then((response) => {
-        setHealth(response.data);
-      })
-      .catch(() => {
-        setError("Backend is not reachable");
-      });
-  }, []);
+  const { data: health, isLoading, isError } = useHealth();
 
   return (
     <main className="grid min-h-screen place-items-center bg-slate-950 p-6">
@@ -39,12 +21,13 @@ function App() {
 
         <div className="mt-8 flex items-center gap-3 rounded-xl bg-slate-800 p-4 text-slate-300">
           <span
-            className={`h-3 w-3 rounded-full ${health
-              ? "bg-emerald-500"
-              : error
-                ? "bg-red-500"
-                : "bg-yellow-400"
-              }`}
+            className={`h-3 w-3 rounded-full ${
+              health
+                ? "bg-emerald-500"
+                : isError
+                  ? "bg-red-500"
+                  : "bg-yellow-400"
+            }`}
           />
 
           {health && (
@@ -53,9 +36,11 @@ function App() {
             </span>
           )}
 
-          {error && <span>{error}</span>}
+          {isError && <span>Backend is not reachable</span>}
 
-          {!health && !error && <span>Checking backend connection...</span>}
+          {isLoading && !isError && (
+            <span>Checking backend connection...</span>
+          )}
         </div>
       </section>
     </main>
