@@ -17,6 +17,7 @@ import java.net.URI;
 public class AuthController {
 
     private final RegistrationService registrationService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
@@ -40,8 +41,9 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        return ResponseEntity.ok(
-                authenticationService.login(request)
-        );
+        LoginResponse response =
+                authenticationService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 }
