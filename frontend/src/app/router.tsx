@@ -3,18 +3,29 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
+
+import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { AppLayout } from "@/layouts/AppLayout";
 import CustomersPage from "@/pages/CustomersPage";
 import DashboardPage from "@/pages/DashboardPage";
 import InventoryPage from "@/pages/InventoryPage";
 import InvoicesPage from "@/pages/InvoicesPage";
+import LoginPage from "@/pages/LoginPage";
 import ServiceRequestsPage from "@/pages/ServiceRequestsPage";
 import TechniciansPage from "@/pages/TechniciansPage";
 
 const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
     path: "/",
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
