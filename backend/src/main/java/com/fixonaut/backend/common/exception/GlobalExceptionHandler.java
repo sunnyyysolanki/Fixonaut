@@ -101,6 +101,26 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflictError(
+            ConflictException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now().getNano(),
+                HttpStatus.CONFLICT.value(),
+                exception.getCode(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of(),
+                UUID.randomUUID().toString()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
 }
 
 
