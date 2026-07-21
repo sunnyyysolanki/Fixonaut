@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCustomer,
   deactivateCustomer,
+  getCustomer,
   getCustomers,
   updateCustomer,
 } from "./customer-api";
@@ -22,6 +23,14 @@ export function useCustomers(filters: CustomerFilters) {
     queryKey: customerKeys.list(filters),
     queryFn: () => getCustomers(filters),
     placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useCustomer(customerId: string) {
+  return useQuery({
+    queryKey: customerKeys.detail(customerId),
+    queryFn: () => getCustomer(customerId),
+    enabled: Boolean(customerId),
   });
 }
 

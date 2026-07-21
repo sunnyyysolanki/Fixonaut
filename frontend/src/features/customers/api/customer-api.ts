@@ -9,16 +9,13 @@ import type {
 export async function getCustomers(
   filters: CustomerFilters,
 ): Promise<PageResponse<Customer>> {
-  const response = await apiClient.get<PageResponse<Customer>>(
-    "/customers",
-    {
-      params: {
-        page: filters.page,
-        size: filters.size,
-        search: filters.search || undefined,
-      },
+  const response = await apiClient.get<PageResponse<Customer>>("/customers", {
+    params: {
+      page: filters.page,
+      size: filters.size,
+      search: filters.search || undefined,
     },
-  );
+  });
 
   return response.data;
 }
@@ -26,10 +23,7 @@ export async function getCustomers(
 export async function createCustomer(
   values: CustomerFormValues,
 ): Promise<Customer> {
-  const response = await apiClient.post<Customer>(
-    "/customers",
-    values,
-  );
+  const response = await apiClient.post<Customer>("/customers", values);
 
   return response.data;
 }
@@ -52,6 +46,12 @@ export async function deactivateCustomer(
   const response = await apiClient.patch<Customer>(
     `/customers/${customerId}/deactivate`,
   );
+
+  return response.data;
+}
+
+export async function getCustomer(customerId: string): Promise<Customer> {
+  const response = await apiClient.get<Customer>(`/customers/${customerId}`);
 
   return response.data;
 }
