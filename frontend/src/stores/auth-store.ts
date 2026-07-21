@@ -11,30 +11,36 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role?: UserRole;
+  roles: UserRole[];
   organizationId: string;
 };
 
 type AuthState = {
   user: AuthUser | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
-  setUser: (user: AuthUser) => void;
+
+  setAuth: (user: AuthUser, accessToken: string) => void;
   clearAuth: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  accessToken: null,
   isAuthenticated: false,
 
-  setUser: (user) =>
+  setAuth: (user, accessToken) =>
     set({
       user,
+      accessToken,
       isAuthenticated: true,
     }),
 
   clearAuth: () =>
     set({
       user: null,
+      accessToken: null,
       isAuthenticated: false,
     }),
 }));
