@@ -61,3 +61,24 @@ export type InventoryTransaction = {
   createdByUserName: string;
   createdAt: string;
 };
+
+export type ConsumePartValues = {
+  partId: string;
+  serviceRequestId: string;
+  quantity: number;
+  unitCost: number;
+  note: string;
+};
+
+export type ServiceRequestPart = {
+  id: string;
+  serviceRequestId: string;
+  partId: string;
+  partName: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+  addedByUserId: string;
+  addedByUserName: string;
+  createdAt: string;
+};

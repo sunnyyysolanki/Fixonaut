@@ -94,6 +94,10 @@ const router = createBrowserRouter([
         element: <CreatePartPage />,
       },
       {
+        path: "inventory/:partId",
+        element: <PartDetailPage />,
+      },
+      {
         path: "schedule",
         element: <SchedulePage />,
       },
