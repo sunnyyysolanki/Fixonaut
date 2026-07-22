@@ -315,6 +315,45 @@ public class ServiceRequestService {
                 );
 
         statusHistoryRepository.save(history);
+
+        UserEntity assignedTechnician =
+                serviceRequest.getAssignedTechnician();
+
+        boolean isAssignmentEvent =
+                toStatus == ServiceRequestStatus.ASSIGNED;
+
+        boolean technicianExists =
+                assignedTechnician != null;
+
+        boolean changedByAnotherUser =
+                technicianExists
+                        && !assignedTechnician
+                        .getId()
+                        .equals(changedByUser.getId());
+
+        if (technicianExists
+                && changedByAnotherUser
+                && !isAssignmentEvent) {
+
+            eventPublisher.publishEvent(
+                    new NotificationRequestedEvent(
+                            serviceRequest
+                                    .getOrganization()
+                                    .getId(),
+                            assignedTechnician.getId(),
+                            NotificationType
+                                    .SERVICE_REQUEST_STATUS_CHANGED,
+                            "Service request status changed",
+                            serviceRequest.getTitle()
+                                    + " is now "
+                                    + toStatus.name()
+                                    .toLowerCase()
+                                    .replace("_", " "),
+                            "SERVICE_REQUEST",
+                            serviceRequest.getId()
+                    )
+            );
+        }
     }
 
     private void validateTechnician(
