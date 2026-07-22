@@ -23,6 +23,7 @@ import type {
 
 import { useTechnicians } from "@/features/technicians/api/use-technicians";
 import { useAuthStore } from "@/stores/auth-store";
+import { ServiceRequestPartsCard } from "@/features/service-requests/ServiceRequestPartsCard";
 
 function ServiceRequestDetailPage() {
   const { requestId } = useParams<{
@@ -408,6 +409,10 @@ function ServiceRequestDetailPage() {
         </Card>
       )}
 
+      <ServiceRequestPartsCard
+        serviceRequestId={request.id}
+        status={request.status}
+      />
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-white">Status timeline</h2>
