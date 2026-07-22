@@ -4,6 +4,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth-store";
 import NotificationBell from "@/features/notifications/NotificationBell";
+import { useNotificationSocket } from "@/features/notifications/use-notification-socket";
 
 const navigation = [
   { label: "Dashboard", path: "/dashboard" },
@@ -87,6 +88,8 @@ export function AppLayout() {
     clearAuth();
     navigate("/login", { replace: true });
   }
+
+  useNotificationSocket();
 
   const userName = user?.name ?? "User";
   const userEmail = user?.email ?? "";
