@@ -1,0 +1,24 @@
+package com.fixonaut.backend.notification;
+
+public enum NotificationType {
+
+    SERVICE_REQUEST_ASSIGNED,
+
+    SERVICE_REQUEST_STATUS_CHANGED,
+
+    APPOINTMENT_CREATED,
+
+    APPOINTMENT_CONFIRMED,
+
+    APPOINTMENT_CANCELLED,
+
+    QUOTE_SENT,
+
+    QUOTE_APPROVED,
+
+    QUOTE_REJECTED,
+
+    INVOICE_ISSUED,
+
+    PAYMENT_RECORDED
+}
