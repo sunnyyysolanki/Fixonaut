@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -55,6 +56,9 @@ public class InventoryTransactionEntity {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(name = "unit_cost", nullable = false, precision = 12, scale = 2)
+    private BigDecimal unitCost;
+
     @Column(columnDefinition = "TEXT")
     private String note;
 
@@ -68,11 +72,18 @@ public class InventoryTransactionEntity {
             UserEntity createdByUser,
             InventoryTransactionType transactionType,
             Integer quantity,
+            BigDecimal unitCost,
             String note
     ) {
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException(
                     "Transaction quantity must be greater than zero"
+            );
+        }
+
+        if (unitCost == null || unitCost.signum() < 0) {
+            throw new IllegalArgumentException(
+                    "Transaction unit cost cannot be negative"
             );
         }
 
@@ -82,6 +93,7 @@ public class InventoryTransactionEntity {
         this.createdByUser = createdByUser;
         this.transactionType = transactionType;
         this.quantity = quantity;
+        this.unitCost = unitCost;
         this.note = note;
     }
 
