@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,5 +63,24 @@ public interface AppointmentRepository
             @Param("endsAt") Instant endsAt,
             @Param("excludedAppointmentId")
             UUID excludedAppointmentId
+    );
+
+    @Query("""
+        SELECT appointment
+        FROM AppointmentEntity appointment
+        WHERE appointment.organization.id = :organizationId
+          AND appointment.startsAt < :to
+          AND appointment.endsAt > :from
+          AND (
+                :technicianId IS NULL
+                OR appointment.technician.id = :technicianId
+          )
+        ORDER BY appointment.startsAt ASC
+        """)
+    List<AppointmentEntity> findAppointmentsInRange(
+            @Param("organizationId") UUID organizationId,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            @Param("technicianId") UUID technicianId
     );
 }

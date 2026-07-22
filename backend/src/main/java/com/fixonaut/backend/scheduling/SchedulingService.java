@@ -478,4 +478,34 @@ public class SchedulingService {
 
         return normalized.isBlank() ? null : normalized;
     }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getAppointmentsInRange(
+            Instant from,
+            Instant to,
+            UUID technicianId
+    ) {
+        UUID organizationId =
+                authenticatedUserContext.getCurrentOrganizationId();
+
+        validateAppointmentTime(from, to);
+
+        if (technicianId != null) {
+            findTechnician(
+                    technicianId,
+                    organizationId
+            );
+        }
+
+        return appointmentRepository
+                .findAppointmentsInRange(
+                        organizationId,
+                        from,
+                        to,
+                        technicianId
+                )
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
 }
