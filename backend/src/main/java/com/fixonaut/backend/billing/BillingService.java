@@ -308,7 +308,6 @@ public class BillingService {
                 "INVOICE",
                 invoice.getId()
         );
-
         return toInvoiceResponse(invoice);
     }
 
