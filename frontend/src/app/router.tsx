@@ -17,6 +17,7 @@ import CreateCustomerPage from "@/pages/CreateCustomerPage";
 import CustomerDetailPage from "@/pages/CustomerDetailPage";
 import EditCustomerPage from "@/pages/EditCustomerPage";
 import CreateTechnicianPage from "@/pages/CreateTechnicianPage";
+import ServiceRequestPlaceholderPage from "@/pages/ServiceRequestPlaceholderPage";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +59,14 @@ const router = createBrowserRouter([
       {
         path: "service-requests",
         element: <ServiceRequestsPage />,
+      },
+      {
+        path: "service-requests/new",
+        element: <ServiceRequestPlaceholderPage />,
+      },
+      {
+        path: "service-requests/:requestId",
+        element: <ServiceRequestPlaceholderPage />,
       },
       {
         path: "technicians",
