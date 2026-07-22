@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth-store";
+import NotificationBell from "@/features/notifications/NotificationBell";
 
 const navigation = [
   { label: "Dashboard", path: "/dashboard" },
@@ -111,6 +112,8 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell />
+
             {user && <UserSummary name={userName} email={userEmail} />}
 
             <Button
