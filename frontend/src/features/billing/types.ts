@@ -95,3 +95,35 @@ export type CreateInvoiceValues = {
 export type RecordPaymentValues = {
   amount: number;
 };
+
+export type InvoiceSummary = {
+  id: string;
+  invoiceNumber: string;
+  serviceRequestId: string;
+  serviceRequestTitle: string;
+  status: InvoiceStatus;
+  paymentStatus: PaymentStatus;
+  currency: string;
+  totalAmount: number;
+  amountPaid: number;
+  issuedAt: string | null;
+  createdAt: string;
+};
+
+export type InvoiceFilters = {
+  page: number;
+  size: number;
+  search: string;
+  status?: InvoiceStatus;
+  paymentStatus?: PaymentStatus;
+};
+
+export type InvoicePageResponse = {
+  content: InvoiceSummary[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+};

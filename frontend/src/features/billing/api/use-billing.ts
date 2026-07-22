@@ -6,6 +6,7 @@ import {
   createInvoice,
   createQuote,
   getInvoice,
+  getInvoices,
   getQuote,
   issueInvoice,
   recordPayment,
@@ -17,6 +18,7 @@ import type {
   CreateInvoiceValues,
   CreateQuoteValues,
   Invoice,
+  InvoiceFilters,
   Quote,
   RecordPaymentValues,
 } from "../types";
@@ -28,6 +30,9 @@ const billingKeys = {
 
   invoice: (invoiceId: string) =>
     [...billingKeys.all, "invoice", invoiceId] as const,
+
+  invoices: (filters: InvoiceFilters) =>
+    [...billingKeys.all, "invoices", filters] as const,
 };
 
 export function useQuote(quoteId: string) {
@@ -145,5 +150,12 @@ export function useRecordPayment() {
         queryKey: billingKeys.all,
       });
     },
+  });
+}
+export function useInvoices(filters: InvoiceFilters) {
+  return useQuery({
+    queryKey: billingKeys.invoices(filters),
+    queryFn: () => getInvoices(filters),
+    placeholderData: (previousData) => previousData,
   });
 }

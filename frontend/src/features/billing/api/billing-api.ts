@@ -4,6 +4,8 @@ import type {
   CreateInvoiceValues,
   CreateQuoteValues,
   Invoice,
+  InvoiceFilters,
+  InvoicePageResponse,
   Quote,
   RecordPaymentValues,
 } from "../types";
@@ -76,6 +78,21 @@ export async function recordPayment(
     `/invoices/${invoiceId}/payments`,
     values,
   );
+
+  return response.data;
+}
+export async function getInvoices(
+  filters: InvoiceFilters,
+): Promise<InvoicePageResponse> {
+  const response = await apiClient.get<InvoicePageResponse>("/invoices", {
+    params: {
+      page: filters.page,
+      size: filters.size,
+      search: filters.search || undefined,
+      status: filters.status || undefined,
+      paymentStatus: filters.paymentStatus || undefined,
+    },
+  });
 
   return response.data;
 }
