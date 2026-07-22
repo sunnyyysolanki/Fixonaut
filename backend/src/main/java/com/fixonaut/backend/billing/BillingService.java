@@ -2,6 +2,8 @@ package com.fixonaut.backend.billing;
 
 import com.fixonaut.backend.common.exception.ConflictException;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
+import com.fixonaut.backend.notification.NotificationRequestedEvent;
+import com.fixonaut.backend.notification.NotificationType;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
 import com.fixonaut.backend.security.AuthenticatedUserContext;
@@ -10,6 +12,7 @@ import com.fixonaut.backend.service.ServiceRequestRepository;
 import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class BillingService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public QuoteResponse createQuote(
@@ -102,6 +106,16 @@ public class BillingService {
 
         quote.send();
 
+        notifyAssignedTechnician(
+                quote.getServiceRequest(),
+                NotificationType.QUOTE_SENT,
+                "Quote sent",
+                "A quote was sent for "
+                        + quote.getServiceRequest().getTitle(),
+                "QUOTE",
+                quote.getId()
+        );
+
         return toQuoteResponse(quote);
     }
 
@@ -128,7 +142,19 @@ public class BillingService {
 
         quote.reject();
 
+        notifyAssignedTechnician(
+                quote.getServiceRequest(),
+                NotificationType.QUOTE_REJECTED,
+                "Quote rejected",
+                "The quote was rejected for "
+                        + quote.getServiceRequest().getTitle(),
+                "QUOTE",
+                quote.getId()
+        );
+
         return toQuoteResponse(quote);
+
+
     }
 
     @Transactional
@@ -225,6 +251,16 @@ public class BillingService {
 
         invoice.issue();
 
+        notifyAssignedTechnician(
+                invoice.getServiceRequest(),
+                NotificationType.INVOICE_ISSUED,
+                "Invoice issued",
+                "An invoice was issued for "
+                        + invoice.getServiceRequest().getTitle(),
+                "INVOICE",
+                invoice.getId()
+        );
+
         return toInvoiceResponse(invoice);
     }
 
@@ -262,6 +298,16 @@ public class BillingService {
                         );
 
         invoice.recordPayment(request.amount());
+
+        notifyAssignedTechnician(
+                invoice.getServiceRequest(),
+                NotificationType.PAYMENT_RECORDED,
+                "Payment recorded",
+                "A payment was recorded for "
+                        + invoice.getServiceRequest().getTitle(),
+                "INVOICE",
+                invoice.getId()
+        );
 
         return toInvoiceResponse(invoice);
     }
@@ -490,6 +536,36 @@ public class BillingService {
                 invoice.getAmountPaid(),
                 invoice.getIssuedAt(),
                 invoice.getCreatedAt()
+        );
+    }
+
+    private void notifyAssignedTechnician(
+            ServiceRequestEntity serviceRequest,
+            NotificationType notificationType,
+            String title,
+            String message,
+            String referenceType,
+            UUID referenceId
+    ) {
+        UserEntity assignedTechnician =
+                serviceRequest.getAssignedTechnician();
+
+        if (assignedTechnician == null) {
+            return;
+        }
+
+        eventPublisher.publishEvent(
+                new NotificationRequestedEvent(
+                        serviceRequest
+                                .getOrganization()
+                                .getId(),
+                        assignedTechnician.getId(),
+                        notificationType,
+                        title,
+                        message,
+                        referenceType,
+                        referenceId
+                )
         );
     }
 }
