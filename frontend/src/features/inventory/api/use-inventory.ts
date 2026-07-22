@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  consumePart,
   createPart,
   getPart,
   getPartTransactions,
   getParts,
+  getServiceRequestParts,
   stockIn,
   updatePart,
 } from "./inventory-api";
 
 import type {
+  ConsumePartValues,
   CreatePartValues,
   Part,
   PartFilters,
@@ -27,6 +30,9 @@ const inventoryKeys = {
 
   transactions: (partId: string) =>
     [...inventoryKeys.all, "transactions", partId] as const,
+
+  serviceRequestParts: (serviceRequestId: string) =>
+    [...inventoryKeys.all, "service-request-parts", serviceRequestId] as const,
 };
 
 export function useParts(filters: PartFilters) {
@@ -50,6 +56,14 @@ export function usePartTransactions(partId: string) {
     queryKey: inventoryKeys.transactions(partId),
     queryFn: () => getPartTransactions(partId),
     enabled: Boolean(partId),
+  });
+}
+
+export function useServiceRequestParts(serviceRequestId: string) {
+  return useQuery({
+    queryKey: inventoryKeys.serviceRequestParts(serviceRequestId),
+    queryFn: () => getServiceRequestParts(serviceRequestId),
+    enabled: Boolean(serviceRequestId),
   });
 }
 
@@ -110,6 +124,24 @@ export function useStockIn() {
 
       queryClient.invalidateQueries({
         queryKey: inventoryKeys.transactions(part.id),
+      });
+    },
+  });
+}
+
+export function useConsumePart() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: ConsumePartValues) => consumePart(values),
+
+    onSuccess: (_, values) => {
+      queryClient.invalidateQueries({
+        queryKey: inventoryKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: inventoryKeys.serviceRequestParts(values.serviceRequestId),
       });
     },
   });

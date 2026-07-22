@@ -1,148 +1,91 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import {
-  consumePart,
-  createPart,
-  getPart,
-  getPartTransactions,
-  getParts,
-  getServiceRequestParts,
-  stockIn,
-  updatePart,
-} from "./inventory-api";
+import { apiClient } from "@/lib/api-client";
 
 import type {
   ConsumePartValues,
   CreatePartValues,
+  InventoryTransaction,
   Part,
   PartFilters,
+  PartPageResponse,
+  ServiceRequestPart,
   StockInValues,
   UpdatePartValues,
 } from "../types";
 
-const inventoryKeys = {
-  all: ["inventory"] as const,
-
-  parts: (filters: PartFilters) =>
-    [...inventoryKeys.all, "parts", filters] as const,
-
-  part: (partId: string) => [...inventoryKeys.all, "part", partId] as const,
-
-  transactions: (partId: string) =>
-    [...inventoryKeys.all, "transactions", partId] as const,
-
-  serviceRequestParts: (serviceRequestId: string) =>
-    [...inventoryKeys.all, "service-request-parts", serviceRequestId] as const,
-};
-
-export function useParts(filters: PartFilters) {
-  return useQuery({
-    queryKey: inventoryKeys.parts(filters),
-    queryFn: () => getParts(filters),
-    placeholderData: (previousData) => previousData,
-  });
-}
-
-export function usePart(partId: string) {
-  return useQuery({
-    queryKey: inventoryKeys.part(partId),
-    queryFn: () => getPart(partId),
-    enabled: Boolean(partId),
-  });
-}
-
-export function usePartTransactions(partId: string) {
-  return useQuery({
-    queryKey: inventoryKeys.transactions(partId),
-    queryFn: () => getPartTransactions(partId),
-    enabled: Boolean(partId),
-  });
-}
-
-export function useServiceRequestParts(serviceRequestId: string) {
-  return useQuery({
-    queryKey: inventoryKeys.serviceRequestParts(serviceRequestId),
-    queryFn: () => getServiceRequestParts(serviceRequestId),
-    enabled: Boolean(serviceRequestId),
-  });
-}
-
-export function useCreatePart() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (values: CreatePartValues) => createPart(values),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.all,
-      });
+export async function getParts(
+  filters: PartFilters,
+): Promise<PartPageResponse> {
+  const response = await apiClient.get<PartPageResponse>("/parts", {
+    params: {
+      page: filters.page,
+      size: filters.size,
+      search: filters.search || undefined,
     },
   });
+
+  return response.data;
 }
 
-export function useUpdatePart() {
-  const queryClient = useQueryClient();
+export async function getPart(partId: string): Promise<Part> {
+  const response = await apiClient.get<Part>(`/parts/${partId}`);
 
-  return useMutation({
-    mutationFn: ({
-      partId,
-      values,
-    }: {
-      partId: string;
-      values: UpdatePartValues;
-    }) => updatePart(partId, values),
-
-    onSuccess: (part: Part) => {
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.all,
-      });
-
-      queryClient.setQueryData(inventoryKeys.part(part.id), part);
-    },
-  });
+  return response.data;
 }
 
-export function useStockIn() {
-  const queryClient = useQueryClient();
+export async function createPart(values: CreatePartValues): Promise<Part> {
+  const response = await apiClient.post<Part>("/parts", values);
 
-  return useMutation({
-    mutationFn: ({
-      partId,
-      values,
-    }: {
-      partId: string;
-      values: StockInValues;
-    }) => stockIn(partId, values),
-
-    onSuccess: (part: Part) => {
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.all,
-      });
-
-      queryClient.setQueryData(inventoryKeys.part(part.id), part);
-
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.transactions(part.id),
-      });
-    },
-  });
+  return response.data;
 }
 
-export function useConsumePart() {
-  const queryClient = useQueryClient();
+export async function updatePart(
+  partId: string,
+  values: UpdatePartValues,
+): Promise<Part> {
+  const response = await apiClient.patch<Part>(`/parts/${partId}`, values);
 
-  return useMutation({
-    mutationFn: (values: ConsumePartValues) => consumePart(values),
+  return response.data;
+}
 
-    onSuccess: (_, values) => {
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.all,
-      });
+export async function stockIn(
+  partId: string,
+  values: StockInValues,
+): Promise<Part> {
+  const response = await apiClient.post<Part>(
+    `/parts/${partId}/stock-in`,
+    values,
+  );
 
-      queryClient.invalidateQueries({
-        queryKey: inventoryKeys.serviceRequestParts(values.serviceRequestId),
-      });
-    },
-  });
+  return response.data;
+}
+
+export async function getPartTransactions(
+  partId: string,
+): Promise<InventoryTransaction[]> {
+  const response = await apiClient.get<InventoryTransaction[]>(
+    `/parts/${partId}/transactions`,
+  );
+
+  return response.data;
+}
+
+export async function consumePart(
+  values: ConsumePartValues,
+): Promise<ServiceRequestPart> {
+  const response = await apiClient.post<ServiceRequestPart>(
+    "/inventory/consume",
+    values,
+  );
+
+  return response.data;
+}
+
+export async function getServiceRequestParts(
+  serviceRequestId: string,
+): Promise<ServiceRequestPart[]> {
+  const response = await apiClient.get<ServiceRequestPart[]>(
+    `/service-requests/${serviceRequestId}/parts`,
+  );
+
+  return response.data;
 }
