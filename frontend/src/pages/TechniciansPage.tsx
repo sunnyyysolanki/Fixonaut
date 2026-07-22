@@ -4,8 +4,11 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+
 import { useTechnicians } from "@/features/technicians/api/use-technicians";
+
 import type { Technician } from "@/features/technicians/types";
+
 import { useDebounce } from "@/hooks/use-debounce";
 
 function TechniciansPage() {
@@ -40,7 +43,7 @@ function TechniciansPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="w-full sm:w-72">
             <Input
               label="Search technicians"
@@ -76,7 +79,11 @@ function TechniciansPage() {
       {!isLoading && !isError && technicians.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <h2 className="text-lg font-semibold text-white">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-xl text-slate-400">
+              +
+            </div>
+
+            <h2 className="mt-4 text-lg font-semibold text-white">
               No technicians found
             </h2>
 
@@ -96,52 +103,50 @@ function TechniciansPage() {
 
       {!isLoading && !isError && technicians.length > 0 && (
         <>
-          <TechnicianTable technicians={technicians} />
-          <TechnicianCards technicians={technicians} />
+          <TechnicianDesktopTable technicians={technicians} />
 
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">
-              Page {page + 1} of {Math.max(data?.totalPages ?? 0, 1)}
-            </p>
+          <TechnicianMobileCards technicians={technicians} />
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={page === 0}
-                onClick={() => setPage((currentPage) => currentPage - 1)}
-                className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 disabled:opacity-40"
-              >
-                Previous
-              </button>
-
-              <button
-                type="button"
-                disabled={data?.last ?? true}
-                onClick={() => setPage((currentPage) => currentPage + 1)}
-                className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages ?? 0}
+            hasPrevious={page > 0}
+            hasNext={data ? !data.last : false}
+            onPrevious={() => setPage((currentPage) => currentPage - 1)}
+            onNext={() => setPage((currentPage) => currentPage + 1)}
+          />
         </>
       )}
     </section>
   );
 }
 
-function TechnicianTable({ technicians }: { technicians: Technician[] }) {
+function TechnicianDesktopTable({
+  technicians,
+}: {
+  technicians: Technician[];
+}) {
   return (
     <Card className="hidden overflow-hidden md:block">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-slate-800 bg-slate-900">
             <tr>
-              <th className="px-6 py-4 text-slate-400">Technician</th>
-              <th className="px-6 py-4 text-slate-400">Phone</th>
-              <th className="px-6 py-4 text-slate-400">Skills</th>
-              <th className="px-6 py-4 text-slate-400">Service area</th>
-              <th className="px-6 py-4 text-slate-400">Status</th>
+              <th className="px-6 py-4 font-medium text-slate-400">
+                Technician
+              </th>
+
+              <th className="px-6 py-4 font-medium text-slate-400">Phone</th>
+
+              <th className="px-6 py-4 font-medium text-slate-400">Skills</th>
+
+              <th className="px-6 py-4 font-medium text-slate-400">
+                Service area
+              </th>
+
+              <th className="px-6 py-4 font-medium text-slate-400">Status</th>
+
+              <th className="px-6 py-4 font-medium text-slate-400">Schedule</th>
             </tr>
           </thead>
 
@@ -150,12 +155,15 @@ function TechnicianTable({ technicians }: { technicians: Technician[] }) {
               <tr key={technician.id} className="hover:bg-slate-800/50">
                 <td className="px-6 py-4">
                   <p className="font-medium text-white">{technician.name}</p>
+
                   <p className="mt-1 text-xs text-slate-500">
                     {technician.email}
                   </p>
                 </td>
 
-                <td className="px-6 py-4 text-slate-300">{technician.phone}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-slate-300">
+                  {technician.phone}
+                </td>
 
                 <td className="max-w-xs px-6 py-4 text-slate-400">
                   <p className="truncate">{technician.skills ?? "—"}</p>
@@ -168,6 +176,15 @@ function TechnicianTable({ technicians }: { technicians: Technician[] }) {
                 <td className="px-6 py-4">
                   <TechnicianStatus active={technician.active} />
                 </td>
+
+                <td className="px-6 py-4">
+                  <Link
+                    to={`/technicians/${technician.id}/availability`}
+                    className="whitespace-nowrap text-orange-400 hover:text-orange-300"
+                  >
+                    Availability
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -177,7 +194,7 @@ function TechnicianTable({ technicians }: { technicians: Technician[] }) {
   );
 }
 
-function TechnicianCards({ technicians }: { technicians: Technician[] }) {
+function TechnicianMobileCards({ technicians }: { technicians: Technician[] }) {
   return (
     <div className="grid gap-4 md:hidden">
       {technicians.map((technician) => (
@@ -199,9 +216,18 @@ function TechnicianCards({ technicians }: { technicians: Technician[] }) {
 
             <div className="space-y-2 text-sm text-slate-400">
               <p>{technician.phone}</p>
+
               <p>{technician.serviceArea ?? "No area specified"}</p>
+
               <p>{technician.skills ?? "No skills specified"}</p>
             </div>
+
+            <Link
+              to={`/technicians/${technician.id}/availability`}
+              className="inline-flex text-sm text-orange-400 hover:text-orange-300"
+            >
+              Manage availability →
+            </Link>
           </CardContent>
         </Card>
       ))}
@@ -214,6 +240,50 @@ function TechnicianStatus({ active }: { active: boolean }) {
     <Badge variant={active ? "success" : "neutral"}>
       {active ? "Active" : "Inactive"}
     </Badge>
+  );
+}
+
+function Pagination({
+  currentPage,
+  totalPages,
+  hasPrevious,
+  hasNext,
+  onPrevious,
+  onNext,
+}: {
+  currentPage: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-slate-400">
+        Page {currentPage + 1} of {Math.max(totalPages, 1)}
+      </p>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!hasPrevious}
+          onClick={onPrevious}
+          className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+
+        <button
+          type="button"
+          disabled={!hasNext}
+          onClick={onNext}
+          className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   );
 }
 

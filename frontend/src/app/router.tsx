@@ -19,6 +19,9 @@ import EditCustomerPage from "@/pages/EditCustomerPage";
 import CreateTechnicianPage from "@/pages/CreateTechnicianPage";
 import ServiceRequestDetailPage from "@/pages/ServiceRequestPlaceholderPage";
 import CreateServiceRequestPage from "@/pages/CreateServiceRequestPage";
+import SchedulePage from "@/pages/SchedulePage";
+import CreateAppointmentPage from "@/pages/CreateAppointmentPage";
+import TechnicianAvailabilityPage from "@/pages/TechnicianAvailabilityPage";
 
 const router = createBrowserRouter([
   {
@@ -78,8 +81,20 @@ const router = createBrowserRouter([
         element: <CreateTechnicianPage />,
       },
       {
+        path: "technicians/:technicianId/availability",
+        element: <TechnicianAvailabilityPage />,
+      },
+      {
         path: "inventory",
         element: <InventoryPage />,
+      },
+      {
+        path: "schedule",
+        element: <SchedulePage />,
+      },
+      {
+        path: "appointments/new",
+        element: <CreateAppointmentPage />,
       },
       {
         path: "invoices",
