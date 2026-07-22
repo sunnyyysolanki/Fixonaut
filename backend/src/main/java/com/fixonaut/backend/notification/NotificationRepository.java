@@ -59,4 +59,15 @@ public interface NotificationRepository
             @Param("notificationId") UUID notificationId,
             @Param("userId") UUID userId
     );
+
+    @Modifying
+    @Query("""
+        UPDATE NotificationEntity notification
+        SET notification.readAt = CURRENT_TIMESTAMP
+        WHERE notification.user.id = :userId
+          AND notification.readAt IS NULL
+        """)
+    int markAllAsRead(
+            @Param("userId") UUID userId
+    );
 }
