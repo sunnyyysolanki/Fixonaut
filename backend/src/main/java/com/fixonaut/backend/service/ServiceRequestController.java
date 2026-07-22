@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -199,5 +200,24 @@ public class ServiceRequestController {
 
     private String getNote(ChangeStatusRequest request) {
         return request == null ? null : request.note();
+    }
+
+    @GetMapping("/{requestId}/history")
+    @PreAuthorize("""
+        hasAnyRole(
+            'OWNER',
+            'ADMIN',
+            'DISPATCHER',
+            'TECHNICIAN'
+        )
+        """)
+    public ResponseEntity<
+            List<ServiceRequestStatusHistoryResponse>
+            > getHistory(
+            @PathVariable UUID requestId
+    ) {
+        return ResponseEntity.ok(
+                serviceRequestService.getHistory(requestId)
+        );
     }
 }

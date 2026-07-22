@@ -381,4 +381,40 @@ public class ServiceRequestService {
 
         return normalized.isBlank() ? null : normalized;
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<ServiceRequestStatusHistoryResponse>
+    getHistory(UUID serviceRequestId) {
+        UUID organizationId =
+                authenticatedUserContext.getCurrentOrganizationId();
+
+        ServiceRequestEntity serviceRequest =
+                findRequest(
+                        serviceRequestId,
+                        organizationId
+                );
+
+        return statusHistoryRepository
+                .findByServiceRequestIdOrderByChangedAtAsc(
+                        serviceRequest.getId()
+                )
+                .stream()
+                .map(this::toHistoryResponse)
+                .toList();
+    }
+
+    private ServiceRequestStatusHistoryResponse
+    toHistoryResponse(
+            ServiceRequestStatusHistoryEntity history
+    ) {
+        return new ServiceRequestStatusHistoryResponse(
+                history.getId(),
+                history.getChangedByUser().getId(),
+                history.getChangedByUser().getName(),
+                history.getFromStatus(),
+                history.getToStatus(),
+                history.getNote(),
+                history.getChangedAt()
+        );
+    }
 }
