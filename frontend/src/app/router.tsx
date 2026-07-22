@@ -22,6 +22,7 @@ import CreateServiceRequestPage from "@/pages/CreateServiceRequestPage";
 import SchedulePage from "@/pages/SchedulePage";
 import CreateAppointmentPage from "@/pages/CreateAppointmentPage";
 import TechnicianAvailabilityPage from "@/pages/TechnicianAvailabilityPage";
+import CreatePartPage from "@/pages/CreatePartPage";
 
 const router = createBrowserRouter([
   {
@@ -87,6 +88,10 @@ const router = createBrowserRouter([
       {
         path: "inventory",
         element: <InventoryPage />,
+      },
+      {
+        path: "inventory/new",
+        element: <CreatePartPage />,
       },
       {
         path: "schedule",
