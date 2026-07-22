@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fixonaut.backend.common.exception.ForbiddenException;
 
 import java.time.Instant;
 import java.util.Locale;
@@ -237,6 +238,8 @@ public class ServiceRequestService {
         ServiceRequestEntity serviceRequest =
                 findRequest(serviceRequestId, organizationId);
 
+        validateTransitionActor(serviceRequest);
+
         ServiceRequestStatus previousStatus =
                 serviceRequest.getStatus();
 
@@ -251,6 +254,27 @@ public class ServiceRequestService {
         );
 
         return toResponse(serviceRequest);
+    }
+
+    private void validateTransitionActor(
+            ServiceRequestEntity serviceRequest
+    ) {
+        if (!authenticatedUserContext.hasRole("TECHNICIAN")) {
+            return;
+        }
+
+        UUID currentUserId =
+                authenticatedUserContext.getCurrentUserId();
+
+        UserEntity assignedTechnician =
+                serviceRequest.getAssignedTechnician();
+
+        if (assignedTechnician == null
+                || !assignedTechnician.getId().equals(currentUserId)) {
+            throw new ForbiddenException(
+                    "Only the assigned technician can perform this action"
+            );
+        }
     }
 
     private void recordStatusChange(
