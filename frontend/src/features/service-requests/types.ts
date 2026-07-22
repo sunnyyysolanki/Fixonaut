@@ -48,7 +48,7 @@ export type CreateServiceRequestValues = {
   title: string;
   description: string;
   priority: ServiceRequestPriority;
-  scheduledAt: string;
+  scheduledAt: string | null;
 };
 
 export type AssignTechnicianValues = {
