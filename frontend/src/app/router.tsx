@@ -27,6 +27,7 @@ import PartDetailPage from "@/pages/PartDetailPage";
 import CreateQuotePage from "@/pages/CreateQuotePage";
 import QuoteDetailPage from "@/pages/QuoteDetailPage";
 import CreateInvoicePage from "@/pages/CreateInvoicePage";
+import InvoiceDetailPage from "@/pages/InvoiceDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -116,6 +117,10 @@ const router = createBrowserRouter([
       {
         path: "invoices/new",
         element: <CreateInvoicePage />,
+      },
+      {
+        path: "invoices/:invoiceId",
+        element: <InvoiceDetailPage />,
       },
       {
         path: "quotes/new",
