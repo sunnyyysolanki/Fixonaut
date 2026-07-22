@@ -16,6 +16,7 @@ import TechniciansPage from "@/pages/TechniciansPage";
 import CreateCustomerPage from "@/pages/CreateCustomerPage";
 import CustomerDetailPage from "@/pages/CustomerDetailPage";
 import EditCustomerPage from "@/pages/EditCustomerPage";
+import CreateTechnicianPage from "@/pages/CreateTechnicianPage";
 
 const router = createBrowserRouter([
   {
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
       {
         path: "technicians",
         element: <TechniciansPage />,
+      },
+      {
+        path: "technicians/new",
+        element: <CreateTechnicianPage />,
       },
       {
         path: "inventory",
