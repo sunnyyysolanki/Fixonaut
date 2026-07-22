@@ -24,6 +24,8 @@ import CreateAppointmentPage from "@/pages/CreateAppointmentPage";
 import TechnicianAvailabilityPage from "@/pages/TechnicianAvailabilityPage";
 import CreatePartPage from "@/pages/CreatePartPage";
 import PartDetailPage from "@/pages/PartDetailPage";
+import CreateQuotePage from "@/pages/CreateQuotePage";
+import QuoteDetailPage from "@/pages/QuoteDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -109,6 +111,14 @@ const router = createBrowserRouter([
       {
         path: "invoices",
         element: <InvoicesPage />,
+      },
+      {
+        path: "quotes/new",
+        element: <CreateQuotePage />,
+      },
+      {
+        path: "quotes/:quoteId",
+        element: <QuoteDetailPage />,
       },
     ],
   },
