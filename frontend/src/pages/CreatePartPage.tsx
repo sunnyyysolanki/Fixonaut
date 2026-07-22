@@ -45,7 +45,7 @@ function CreatePartPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CreatePartValues>({
-    resolver: zodResolver(partSchema),
+    resolver: zodResolver(partSchema) as any,
     defaultValues: {
       sku: "",
       name: "",

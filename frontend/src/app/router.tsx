@@ -23,6 +23,7 @@ import SchedulePage from "@/pages/SchedulePage";
 import CreateAppointmentPage from "@/pages/CreateAppointmentPage";
 import TechnicianAvailabilityPage from "@/pages/TechnicianAvailabilityPage";
 import CreatePartPage from "@/pages/CreatePartPage";
+import PartDetailPage from "@/pages/PartDetailPage";
 
 const router = createBrowserRouter([
   {

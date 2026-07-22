@@ -23,6 +23,7 @@ type AuthState = {
 
   setAuth: (user: AuthUser, accessToken: string) => void;
   clearAuth: () => void;
+  hasRole: (role: UserRole) => boolean;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
