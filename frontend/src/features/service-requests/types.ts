@@ -58,3 +58,13 @@ export type AssignTechnicianValues = {
 export type ChangeStatusValues = {
   note?: string;
 };
+
+export type ServiceRequestStatusHistory = {
+  id: string;
+  changedByUserId: string;
+  changedByUserName: string;
+  fromStatus: ServiceRequestStatus | null;
+  toStatus: ServiceRequestStatus;
+  note: string | null;
+  changedAt: string;
+};

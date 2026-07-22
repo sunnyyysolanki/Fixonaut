@@ -7,6 +7,7 @@ import type {
   ServiceRequest,
   ServiceRequestFilters,
   ServiceRequestPageResponse,
+  ServiceRequestStatusHistory,
 } from "../types";
 
 export async function getServiceRequests(
@@ -116,6 +117,16 @@ export async function cancelServiceRequest(
   const response = await apiClient.post<ServiceRequest>(
     `/service-requests/${requestId}/cancel`,
     values,
+  );
+
+  return response.data;
+}
+
+export async function getServiceRequestHistory(
+  requestId: string,
+): Promise<ServiceRequestStatusHistory[]> {
+  const response = await apiClient.get<ServiceRequestStatusHistory[]>(
+    `/service-requests/${requestId}/history`,
   );
 
   return response.data;

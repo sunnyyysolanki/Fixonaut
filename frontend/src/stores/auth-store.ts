@@ -25,7 +25,7 @@ type AuthState = {
   clearAuth: () => void;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
   isAuthenticated: false,
@@ -43,4 +43,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken: null,
       isAuthenticated: false,
     }),
+
+  hasRole: (role) => get().user?.roles.includes(role) ?? false,
 }));

@@ -7,6 +7,7 @@ import {
   completeServiceRequest,
   createServiceRequest,
   getServiceRequest,
+  getServiceRequestHistory,
   getServiceRequests,
   startServiceRequest,
   waitForPart,
@@ -130,3 +131,11 @@ export const useCompleteServiceRequest = createStatusMutation(
 
 export const useCancelServiceRequest =
   createStatusMutation(cancelServiceRequest);
+
+export function useServiceRequestHistory(requestId: string) {
+  return useQuery({
+    queryKey: ["service-requests", "history", requestId],
+    queryFn: () => getServiceRequestHistory(requestId),
+    enabled: Boolean(requestId),
+  });
+}

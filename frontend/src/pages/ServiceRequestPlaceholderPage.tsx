@@ -4,20 +4,25 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+
 import {
-  useAssignTechnician,
   useAcceptServiceRequest,
+  useAssignTechnician,
   useCancelServiceRequest,
   useCompleteServiceRequest,
   useServiceRequest,
+  useServiceRequestHistory,
   useStartServiceRequest,
   useWaitForPart,
 } from "@/features/service-requests/api/use-service-requests";
+
 import type {
   ServiceRequestPriority,
   ServiceRequestStatus,
 } from "@/features/service-requests/types";
+
 import { useTechnicians } from "@/features/technicians/api/use-technicians";
+import { useAuthStore } from "@/stores/auth-store";
 
 function ServiceRequestDetailPage() {
   const { requestId } = useParams<{
@@ -32,6 +37,8 @@ function ServiceRequestDetailPage() {
 
   const requestQuery = useServiceRequest(requestId ?? "");
 
+  const historyQuery = useServiceRequestHistory(requestId ?? "");
+
   const techniciansQuery = useTechnicians({
     page: 0,
     size: 100,
@@ -44,6 +51,18 @@ function ServiceRequestDetailPage() {
   const waitForPartMutation = useWaitForPart();
   const completeMutation = useCompleteServiceRequest();
   const cancelMutation = useCancelServiceRequest();
+
+  const userRoles = useAuthStore((state) => state.user?.roles ?? []);
+
+  const canAssign =
+    userRoles.includes("OWNER") ||
+    userRoles.includes("ADMIN") ||
+    userRoles.includes("DISPATCHER");
+
+  const canOperate =
+    userRoles.includes("OWNER") ||
+    userRoles.includes("ADMIN") ||
+    userRoles.includes("TECHNICIAN");
 
   if (requestQuery.isLoading) {
     return (
@@ -258,120 +277,198 @@ function ServiceRequestDetailPage() {
           </CardContent>
         </Card>
 
+        {canAssign && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold text-white">
+                Assign technician
+              </h2>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <select
+                value={selectedTechnician}
+                onChange={(event) => setSelectedTechnician(event.target.value)}
+                disabled={
+                  request.status !== "NEW" ||
+                  techniciansQuery.isLoading ||
+                  isBusy
+                }
+                className="min-h-10 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">
+                  {techniciansQuery.isLoading
+                    ? "Loading technicians..."
+                    : "Select technician"}
+                </option>
+
+                {technicians.map((technician) => (
+                  <option key={technician.userId} value={technician.userId}>
+                    {technician.name} — {technician.serviceArea ?? "No area"}
+                  </option>
+                ))}
+              </select>
+
+              <Button
+                type="button"
+                className="w-full"
+                onClick={handleAssign}
+                disabled={
+                  !selectedTechnician || request.status !== "NEW" || isBusy
+                }
+              >
+                {assignMutation.isPending
+                  ? "Assigning..."
+                  : "Assign technician"}
+              </Button>
+
+              {request.status !== "NEW" && (
+                <p className="text-xs leading-5 text-slate-500">
+                  Only new requests can be assigned.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {canOperate && (
         <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold text-white">
-              Assign technician
+              Workflow actions
             </h2>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Available actions depend on the current request status.
+            </p>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            <select
-              value={selectedTechnician}
-              onChange={(event) => setSelectedTechnician(event.target.value)}
-              disabled={
-                request.status !== "NEW" || techniciansQuery.isLoading || isBusy
-              }
-              className="min-h-10 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="">
-                {techniciansQuery.isLoading
-                  ? "Loading technicians..."
-                  : "Select technician"}
-              </option>
+          <CardContent className="flex flex-wrap gap-3">
+            {request.status === "ASSIGNED" && (
+              <Button type="button" onClick={handleAccept} disabled={isBusy}>
+                {acceptMutation.isPending ? "Accepting..." : "Accept request"}
+              </Button>
+            )}
 
-              {technicians.map((technician) => (
-                <option key={technician.userId} value={technician.userId}>
-                  {technician.name} — {technician.serviceArea ?? "No area"}
-                </option>
-              ))}
-            </select>
+            {request.status === "ACCEPTED" && (
+              <Button type="button" onClick={handleStart} disabled={isBusy}>
+                {startMutation.isPending ? "Starting..." : "Start work"}
+              </Button>
+            )}
 
-            <Button
-              type="button"
-              className="w-full"
-              onClick={handleAssign}
-              disabled={
-                !selectedTechnician || request.status !== "NEW" || isBusy
-              }
-            >
-              {assignMutation.isPending ? "Assigning..." : "Assign technician"}
-            </Button>
+            {request.status === "IN_PROGRESS" && (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleWaitForPart}
+                  disabled={isBusy}
+                >
+                  {waitForPartMutation.isPending
+                    ? "Updating..."
+                    : "Waiting for part"}
+                </Button>
 
-            {request.status !== "NEW" && (
-              <p className="text-xs leading-5 text-slate-500">
-                Only new requests can be assigned.
+                <Button
+                  type="button"
+                  onClick={handleComplete}
+                  disabled={isBusy}
+                >
+                  {completeMutation.isPending
+                    ? "Completing..."
+                    : "Complete request"}
+                </Button>
+              </>
+            )}
+
+            {request.status === "WAITING_FOR_PART" && (
+              <Button type="button" onClick={handleStart} disabled={isBusy}>
+                {startMutation.isPending ? "Resuming..." : "Resume work"}
+              </Button>
+            )}
+
+            {!["COMPLETED", "CANCELLED"].includes(request.status) && (
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleCancel}
+                disabled={isBusy}
+              >
+                {cancelMutation.isPending ? "Cancelling..." : "Cancel request"}
+              </Button>
+            )}
+
+            {["COMPLETED", "CANCELLED"].includes(request.status) && (
+              <p className="text-sm text-slate-500">
+                No further workflow actions are available.
               </p>
             )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold text-white">Workflow actions</h2>
+          <h2 className="text-lg font-semibold text-white">Status timeline</h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Available actions depend on the current request status.
+            A complete history of request changes.
           </p>
         </CardHeader>
 
-        <CardContent className="flex flex-wrap gap-3">
-          {request.status === "ASSIGNED" && (
-            <Button type="button" onClick={handleAccept} disabled={isBusy}>
-              {acceptMutation.isPending ? "Accepting..." : "Accept request"}
-            </Button>
+        <CardContent>
+          {historyQuery.isLoading && (
+            <p className="text-sm text-slate-400">Loading status history...</p>
           )}
 
-          {request.status === "ACCEPTED" && (
-            <Button type="button" onClick={handleStart} disabled={isBusy}>
-              {startMutation.isPending ? "Starting..." : "Start work"}
-            </Button>
-          )}
-
-          {request.status === "IN_PROGRESS" && (
-            <>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleWaitForPart}
-                disabled={isBusy}
-              >
-                {waitForPartMutation.isPending
-                  ? "Updating..."
-                  : "Waiting for part"}
-              </Button>
-
-              <Button type="button" onClick={handleComplete} disabled={isBusy}>
-                {completeMutation.isPending
-                  ? "Completing..."
-                  : "Complete request"}
-              </Button>
-            </>
-          )}
-
-          {request.status === "WAITING_FOR_PART" && (
-            <Button type="button" onClick={handleStart} disabled={isBusy}>
-              {startMutation.isPending ? "Resuming..." : "Resume work"}
-            </Button>
-          )}
-
-          {!["COMPLETED", "CANCELLED"].includes(request.status) && (
-            <Button
-              type="button"
-              variant="danger"
-              onClick={handleCancel}
-              disabled={isBusy}
-            >
-              {cancelMutation.isPending ? "Cancelling..." : "Cancel request"}
-            </Button>
-          )}
-
-          {["COMPLETED", "CANCELLED"].includes(request.status) && (
-            <p className="text-sm text-slate-500">
-              No further workflow actions are available.
+          {historyQuery.isError && (
+            <p className="text-sm text-red-400">
+              Unable to load status history.
             </p>
           )}
+
+          {!historyQuery.isLoading &&
+            !historyQuery.isError &&
+            historyQuery.data?.length === 0 && (
+              <p className="text-sm text-slate-400">
+                No status history available.
+              </p>
+            )}
+
+          <div className="space-y-6">
+            {historyQuery.data?.map((event, index) => (
+              <div key={event.id} className="relative flex gap-4">
+                {index < historyQuery.data.length - 1 && (
+                  <div className="absolute left-2 top-5 h-full w-px bg-slate-700" />
+                )}
+
+                <div className="relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full bg-orange-500 ring-4 ring-slate-900" />
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {event.fromStatus && (
+                      <>
+                        <StatusBadge status={event.fromStatus} />
+                        <span className="text-slate-500">→</span>
+                      </>
+                    )}
+
+                    <StatusBadge status={event.toStatus} />
+                  </div>
+
+                  <p className="mt-2 text-sm text-slate-300">
+                    {event.note ?? "Status updated"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    By {event.changedByUserName} on{" "}
+                    {formatDate(event.changedAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </section>
