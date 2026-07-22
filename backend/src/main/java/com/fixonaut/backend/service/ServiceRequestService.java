@@ -3,6 +3,8 @@ package com.fixonaut.backend.service;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
 import com.fixonaut.backend.customer.CustomerEntity;
 import com.fixonaut.backend.customer.CustomerRepository;
+import com.fixonaut.backend.notification.NotificationRequestedEvent;
+import com.fixonaut.backend.notification.NotificationType;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
 import com.fixonaut.backend.security.AuthenticatedUserContext;
@@ -10,6 +12,7 @@ import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
 import com.fixonaut.backend.user.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ public class ServiceRequestService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ServiceRequestResponse create(
@@ -127,13 +131,18 @@ public class ServiceRequestService {
             UUID technicianId
     ) {
         UUID organizationId =
-                authenticatedUserContext.getCurrentOrganizationId();
+                authenticatedUserContext
+                        .getCurrentOrganizationId();
 
         ServiceRequestEntity serviceRequest =
-                findRequest(serviceRequestId, organizationId);
+                findRequest(
+                        serviceRequestId,
+                        organizationId
+                );
 
         UserEntity technician =
-                userRepository.findById(technicianId)
+                userRepository
+                        .findById(technicianId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Technician not found"
@@ -158,9 +167,21 @@ public class ServiceRequestService {
                 "Technician assigned"
         );
 
+        eventPublisher.publishEvent(
+                new NotificationRequestedEvent(
+                        organizationId,
+                        technician.getId(),
+                        NotificationType.SERVICE_REQUEST_ASSIGNED,
+                        "New service request assigned",
+                        serviceRequest.getTitle()
+                                + " was assigned to you.",
+                        "SERVICE_REQUEST",
+                        serviceRequest.getId()
+                )
+        );
+
         return toResponse(serviceRequest);
     }
-
     @Transactional
     public ServiceRequestResponse accept(
             UUID serviceRequestId,

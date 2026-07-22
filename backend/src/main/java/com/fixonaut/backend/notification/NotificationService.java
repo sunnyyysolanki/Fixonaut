@@ -2,6 +2,7 @@ package com.fixonaut.backend.notification;
 
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
 import com.fixonaut.backend.organization.OrganizationEntity;
+import com.fixonaut.backend.organization.OrganizationRepository;
 import com.fixonaut.backend.security.AuthenticatedUserContext;
 import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
@@ -21,6 +22,8 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
+    private final OrganizationRepository organizationRepository;
+
 
     @Transactional(readOnly = true)
     public Page<NotificationResponse> getNotifications(
@@ -123,6 +126,44 @@ public class NotificationService {
                 notification.isRead(),
                 notification.getReadAt(),
                 notification.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public NotificationResponse createFromEvent(
+            NotificationRequestedEvent event
+    ) {
+        OrganizationEntity organization =
+                organizationRepository
+                        .findById(event.organizationId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Notification organization not found"
+                                )
+                        );
+
+        UserEntity user =
+                userRepository
+                        .findById(event.userId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Notification user not found"
+                                )
+                        );
+
+        NotificationEntity notification =
+                new NotificationEntity(
+                        organization,
+                        user,
+                        event.notificationType(),
+                        event.title(),
+                        event.message(),
+                        event.referenceType(),
+                        event.referenceId()
+                );
+
+        return toResponse(
+                notificationRepository.save(notification)
         );
     }
 }
