@@ -10,6 +10,8 @@ import com.fixonaut.backend.service.ServiceRequestRepository;
 import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -450,5 +452,44 @@ public class BillingService {
         String normalized = value.trim();
 
         return normalized.isBlank() ? null : normalized;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InvoiceSummaryResponse> searchInvoices(
+            InvoiceStatus status,
+            PaymentStatus paymentStatus,
+            String search,
+            Pageable pageable
+    ) {
+        UUID organizationId =
+                authenticatedUserContext.getCurrentOrganizationId();
+
+        return invoiceRepository
+                .searchByOrganization(
+                        organizationId,
+                        status,
+                        paymentStatus,
+                        normalizeNullable(search),
+                        pageable
+                )
+                .map(this::toInvoiceSummaryResponse);
+    }
+
+    private InvoiceSummaryResponse toInvoiceSummaryResponse(
+            InvoiceEntity invoice
+    ) {
+        return new InvoiceSummaryResponse(
+                invoice.getId(),
+                invoice.getInvoiceNumber(),
+                invoice.getServiceRequest().getId(),
+                invoice.getServiceRequest().getTitle(),
+                invoice.getStatus(),
+                invoice.getPaymentStatus(),
+                invoice.getCurrency(),
+                invoice.getTotalAmount(),
+                invoice.getAmountPaid(),
+                invoice.getIssuedAt(),
+                invoice.getCreatedAt()
+        );
     }
 }

@@ -1,5 +1,8 @@
 package com.fixonaut.backend.billing;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -52,5 +55,35 @@ public interface InvoiceRepository
     boolean existsByOrganizationIdAndInvoiceNumber(
             UUID organizationId,
             String invoiceNumber
+    );
+
+    @Query("""
+        SELECT invoice
+        FROM InvoiceEntity invoice
+        WHERE invoice.organization.id = :organizationId
+          AND (
+                :status IS NULL
+                OR invoice.status = :status
+          )
+          AND (
+                :paymentStatus IS NULL
+                OR invoice.paymentStatus = :paymentStatus
+          )
+          AND (
+                :search IS NULL
+                OR :search = ''
+                OR LOWER(invoice.invoiceNumber)
+                    LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(invoice.serviceRequest.title)
+                    LIKE LOWER(CONCAT('%', :search, '%'))
+          )
+        ORDER BY invoice.createdAt DESC
+        """)
+    Page<InvoiceEntity> searchByOrganization(
+            @Param("organizationId") UUID organizationId,
+            @Param("status") InvoiceStatus status,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            @Param("search") String search,
+            Pageable pageable
     );
 }
