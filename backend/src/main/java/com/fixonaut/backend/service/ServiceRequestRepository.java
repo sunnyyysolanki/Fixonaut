@@ -20,6 +20,10 @@ public interface ServiceRequestRepository
             FROM ServiceRequestEntity request
             WHERE request.organization.id = :organizationId
               AND (
+                    :customerId IS NULL
+                    OR request.customer.id = :customerId
+              )
+              AND (
                     :status IS NULL
                     OR request.status = :status
               )
@@ -39,6 +43,7 @@ public interface ServiceRequestRepository
             """)
     Page<ServiceRequestEntity> searchByOrganization(
             @Param("organizationId") UUID organizationId,
+            @Param("customerId") UUID customerId,
             @Param("status") ServiceRequestStatus status,
             @Param("priority") ServiceRequestPriority priority,
             @Param("search") String search,

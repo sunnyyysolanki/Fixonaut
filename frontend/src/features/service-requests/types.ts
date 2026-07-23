@@ -31,6 +31,7 @@ export type ServiceRequestFilters = {
   search: string;
   status?: ServiceRequestStatus;
   priority?: ServiceRequestPriority;
+  customerId?: string;
 };
 
 export type ServiceRequestPageResponse = {

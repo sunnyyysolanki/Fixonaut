@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 
 import { Button } from "@/components/ui/Button";
@@ -24,8 +24,17 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const sessionExpired = useAuthStore((state) => state.sessionExpired);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname ??
+    "/dashboard";
+
+  const justRegistered =
+    (location.state as { registered?: boolean })?.registered === true;
 
   const {
     register,
@@ -47,7 +56,7 @@ function LoginPage() {
 
       setAuth(response.user, response.accessToken);
 
-      navigate("/dashboard", {
+      navigate(from, {
         replace: true,
       });
     } catch (error) {
@@ -78,6 +87,24 @@ function LoginPage() {
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {sessionExpired && (
+              <div
+                role="alert"
+                className="rounded-lg border border-amber-800 bg-amber-950/50 px-4 py-3 text-sm text-amber-300"
+              >
+                Your session has expired. Please sign in again.
+              </div>
+            )}
+
+            {justRegistered && (
+              <div
+                role="status"
+                className="rounded-lg border border-emerald-800 bg-emerald-950/50 px-4 py-3 text-sm text-emerald-300"
+              >
+                Account created successfully. Sign in to get started.
+              </div>
+            )}
+
             <Input
               label="Email"
               type="email"
@@ -108,6 +135,16 @@ function LoginPage() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
+
+            <p className="text-center text-sm text-slate-400">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-orange-400 hover:text-orange-300"
+              >
+                Create one
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

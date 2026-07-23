@@ -18,9 +18,10 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request) {
+    @Transactional
+    public LoginResult login(LoginRequest request) {
         String normalizedEmail = request.email()
                 .trim()
                 .toLowerCase(Locale.ROOT);
@@ -36,13 +37,14 @@ public class AuthenticationService {
         boolean passwordMatches = passwordEncoder.matches(
                 request.password(),
                 user.getPasswordHash()
-        );
+            );
 
         if (!passwordMatches) {
             throw new InvalidCredentialsException();
         }
 
         String accessToken = jwtService.generateAccessToken(user);
+        String rawRefreshToken = refreshTokenService.createRefreshToken(user);
 
         AuthenticatedUserResponse authenticatedUser =
                 new AuthenticatedUserResponse(
@@ -53,11 +55,13 @@ public class AuthenticationService {
                         user.getRoles()
                 );
 
-        return new LoginResponse(
+        LoginResponse loginResponse = new LoginResponse(
                 accessToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
                 authenticatedUser
         );
+
+        return new LoginResult(loginResponse, rawRefreshToken);
     }
 }

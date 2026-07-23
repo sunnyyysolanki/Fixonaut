@@ -93,6 +93,7 @@ public class ServiceRequestService {
 
     @Transactional(readOnly = true)
     public Page<ServiceRequestResponse> search(
+            UUID customerId,
             ServiceRequestStatus status,
             ServiceRequestPriority priority,
             String search,
@@ -104,6 +105,7 @@ public class ServiceRequestService {
         return serviceRequestRepository
                 .searchByOrganization(
                         organizationId,
+                        customerId,
                         status,
                         priority,
                         normalizeNullable(search),

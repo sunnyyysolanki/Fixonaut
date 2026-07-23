@@ -161,6 +161,26 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(response);
     }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidToken(
+            InvalidTokenException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now().getNano(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "INVALID_TOKEN",
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of(),
+                UUID.randomUUID().toString()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
 }
 
 

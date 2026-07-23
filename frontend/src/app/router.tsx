@@ -5,12 +5,14 @@ import {
 } from "react-router-dom";
 
 import { ProtectedRoute } from "@/app/ProtectedRoute";
+import { PublicOnlyRoute } from "@/app/PublicOnlyRoute";
 import { AppLayout } from "@/layouts/AppLayout";
 import CustomersPage from "@/pages/CustomersPage";
 import DashboardPage from "@/pages/DashboardPage";
 import InventoryPage from "@/pages/InventoryPage";
 import InvoicesPage from "@/pages/InvoicesPage";
 import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import ServiceRequestsPage from "@/pages/ServiceRequestsPage";
 import TechniciansPage from "@/pages/TechniciansPage";
 import CreateCustomerPage from "@/pages/CreateCustomerPage";
@@ -32,7 +34,19 @@ import InvoiceDetailPage from "@/pages/InvoiceDetailPage";
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <PublicOnlyRoute>
+        <LoginPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <PublicOnlyRoute>
+        <RegisterPage />
+      </PublicOnlyRoute>
+    ),
   },
   {
     path: "/",

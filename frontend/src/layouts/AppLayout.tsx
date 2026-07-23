@@ -5,15 +5,24 @@ import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth-store";
 import NotificationBell from "@/features/notifications/NotificationBell";
 import { useNotificationSocket } from "@/features/notifications/use-notification-socket";
+import type { UserRole } from "@/stores/auth-store";
 
-const navigation = [
+import { logout as apiLogout } from "@/features/auth/api/auth-api";
+
+type NavigationItem = {
+  label: string;
+  path: string;
+  allowedRoles?: UserRole[];
+};
+
+const navigation: NavigationItem[] = [
   { label: "Dashboard", path: "/dashboard" },
-  { label: "Customers", path: "/customers" },
-  { label: "Service Requests", path: "/service-requests" },
-  { label: "Schedule", path: "/schedule" },
-  { label: "Technicians", path: "/technicians" },
-  { label: "Inventory", path: "/inventory" },
-  { label: "Invoices", path: "/invoices" },
+  { label: "Customers", path: "/customers", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER"] },
+  { label: "Service Requests", path: "/service-requests", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN"] },
+  { label: "Schedule", path: "/schedule", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN"] },
+  { label: "Technicians", path: "/technicians", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN"] },
+  { label: "Inventory", path: "/inventory", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER"] },
+  { label: "Invoices", path: "/invoices", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER"] },
 ];
 
 function navigationClass({ isActive }: { isActive: boolean }) {
@@ -30,9 +39,19 @@ type NavigationLinksProps = {
 };
 
 function NavigationLinks({ onNavigate }: NavigationLinksProps) {
+  const userRoles = useAuthStore((state) => state.user?.roles ?? []);
+
+  const visibleItems = navigation.filter((item) => {
+    if (!item.allowedRoles) {
+      return true;
+    }
+
+    return item.allowedRoles.some((role) => userRoles.includes(role));
+  });
+
   return (
     <nav className="space-y-1" aria-label="Main navigation">
-      {navigation.map((item) => (
+      {visibleItems.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}
@@ -84,9 +103,15 @@ export function AppLayout() {
     setMobileMenuOpen(false);
   }
 
-  function handleLogout() {
-    clearAuth();
-    navigate("/login", { replace: true });
+  async function handleLogout() {
+    try {
+      await apiLogout();
+    } catch (error) {
+      // Ignore API errors, proceed with local logout
+    } finally {
+      clearAuth();
+      navigate("/login", { replace: true });
+    }
   }
 
   useNotificationSocket();
@@ -106,9 +131,20 @@ export function AppLayout() {
               aria-label="Open navigation menu"
               aria-expanded={mobileMenuOpen}
             >
-              <span className="text-xl" aria-hidden="true">
-                ☰
-              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
             </button>
 
             <Brand />
@@ -134,7 +170,20 @@ export function AppLayout() {
               onClick={handleLogout}
               aria-label="Logout"
             >
-              ↪
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+                />
+              </svg>
             </button>
           </div>
         </div>
@@ -169,9 +218,20 @@ export function AppLayout() {
               onClick={closeMobileMenu}
               aria-label="Close navigation menu"
             >
-              <span className="text-xl" aria-hidden="true">
-                ×
-              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
 

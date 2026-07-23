@@ -8,6 +8,8 @@ import {
   useCustomer,
   useDeactivateCustomer,
 } from "@/features/customers/api/use-customers";
+import { useServiceRequests } from "@/features/service-requests/api/use-service-requests";
+import type { ServiceRequestStatus } from "@/features/service-requests/types";
 
 function CustomerDetailPage() {
   const { customerId } = useParams<{ customerId: string }>();
@@ -134,6 +136,24 @@ function CustomerDetailPage() {
             <DetailRow label="Name" value={customer.name} />
             <DetailRow label="Phone" value={customer.phone} />
             <DetailRow label="Email" value={customer.email ?? "Not provided"} />
+
+            <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-4">
+              <a
+                href={`tel:${customer.phone}`}
+                className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              >
+                📞 Call
+              </a>
+
+              {customer.email && (
+                <a
+                  href={`mailto:${customer.email}`}
+                  className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                >
+                  ✉️ Email
+                </a>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -168,6 +188,8 @@ function CustomerDetailPage() {
           </p>
         </CardContent>
       </Card>
+
+      <CustomerServiceHistory customerId={customer.id} />
     </section>
   );
 }
@@ -181,6 +203,123 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       </span>
     </div>
   );
+}
+
+function CustomerServiceHistory({
+  customerId,
+}: {
+  customerId: string;
+}) {
+  const requestsQuery = useServiceRequests({
+    page: 0,
+    size: 5,
+    search: "",
+    customerId,
+  });
+
+  const requests = requestsQuery.data?.content ?? [];
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Service history</h2>
+
+          <p className="mt-1 text-sm text-slate-400">
+            Recent service requests for this customer.
+          </p>
+        </div>
+
+        <Link
+          to={`/service-requests/new?customerId=${customerId}`}
+          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-orange-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600"
+        >
+          + New request
+        </Link>
+      </CardHeader>
+
+      <CardContent>
+        {requestsQuery.isLoading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-14 animate-pulse rounded-xl bg-slate-950"
+              />
+            ))}
+          </div>
+        )}
+
+        {requestsQuery.isError && (
+          <p className="text-sm text-red-400">
+            Unable to load service history.
+          </p>
+        )}
+
+        {!requestsQuery.isLoading &&
+          !requestsQuery.isError &&
+          requests.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950/50 px-6 py-8 text-center">
+              <p className="text-sm text-slate-500">
+                No service requests found for this customer.
+              </p>
+            </div>
+          )}
+
+        {!requestsQuery.isLoading &&
+          !requestsQuery.isError &&
+          requests.length > 0 && (
+            <div className="space-y-3">
+              {requests.map((request) => (
+                <Link
+                  key={request.id}
+                  to={`/service-requests/${request.id}`}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950 p-4 transition hover:border-slate-700"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">
+                      {request.title}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      {formatServiceDate(request.createdAt)}
+                    </p>
+                  </div>
+
+                  <ServiceStatusBadge status={request.status} />
+                </Link>
+              ))}
+            </div>
+          )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ServiceStatusBadge({ status }: { status: ServiceRequestStatus }) {
+  const variant = {
+    NEW: "info",
+    ASSIGNED: "neutral",
+    ACCEPTED: "info",
+    IN_PROGRESS: "orange",
+    WAITING_FOR_PART: "warning",
+    COMPLETED: "success",
+    CANCELLED: "danger",
+  } as const;
+
+  const label = status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+  return <Badge variant={variant[status]}>{label}</Badge>;
+}
+
+function formatServiceDate(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }
 
 export default CustomerDetailPage;

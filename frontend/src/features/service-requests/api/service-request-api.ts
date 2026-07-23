@@ -22,6 +22,7 @@ export async function getServiceRequests(
         search: filters.search || undefined,
         status: filters.status || undefined,
         priority: filters.priority || undefined,
+        customerId: filters.customerId || undefined,
       },
     },
   );

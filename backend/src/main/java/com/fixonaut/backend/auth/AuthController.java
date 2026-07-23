@@ -8,6 +8,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import jakarta.servlet.http.HttpServletResponse;
+import com.fixonaut.backend.common.exception.InvalidTokenException;
+import com.fixonaut.backend.security.JwtService;
+
 import java.net.URI;
 
 @RestController
@@ -18,6 +22,9 @@ public class AuthController {
     private final RegistrationService registrationService;
     private final AuthenticationService authenticationService;
     private final CurrentUserService currentUserService;
+    private final CookieHelper cookieHelper;
+    private final RefreshTokenService refreshTokenService;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
@@ -39,12 +46,60 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response
     ) {
-        LoginResponse response =
+        LoginResult result =
                 authenticationService.login(request);
 
-        return ResponseEntity.ok(response);
+        cookieHelper.setRefreshTokenCookie(response, result.rawRefreshToken());
+
+        return ResponseEntity.ok(result.loginResponse());
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshResponse> refresh(
+            @CookieValue(name = "refresh_token", required = false)
+            String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new InvalidTokenException("Refresh token is missing");
+        }
+
+        TokenRefreshResult result = refreshTokenService.refresh(refreshToken);
+
+        String newAccessToken = jwtService.generateAccessToken(result.user());
+        cookieHelper.setRefreshTokenCookie(response, result.rawRefreshToken());
+
+        AuthenticatedUserResponse authenticatedUser =
+                new AuthenticatedUserResponse(
+                        result.user().getId(),
+                        result.user().getName(),
+                        result.user().getEmail(),
+                        result.user().getOrganization().getId(),
+                        result.user().getRoles()
+                );
+
+        RefreshResponse refreshResponse = new RefreshResponse(
+                newAccessToken,
+                "Bearer",
+                jwtService.getExpirationSeconds(),
+                authenticatedUser
+        );
+
+        return ResponseEntity.ok(refreshResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refresh_token", required = false)
+            String refreshToken,
+            HttpServletResponse response
+    ) {
+        refreshTokenService.revoke(refreshToken);
+        cookieHelper.clearRefreshTokenCookie(response);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")

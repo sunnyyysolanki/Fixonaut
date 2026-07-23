@@ -59,6 +59,9 @@ public class ServiceRequestController {
             """)
     public ResponseEntity<Page<ServiceRequestResponse>> search(
             @RequestParam(required = false)
+            UUID customerId,
+
+            @RequestParam(required = false)
             ServiceRequestStatus status,
 
             @RequestParam(required = false)
@@ -76,6 +79,7 @@ public class ServiceRequestController {
     ) {
         Page<ServiceRequestResponse> response =
                 serviceRequestService.search(
+                        customerId,
                         status,
                         priority,
                         search,
