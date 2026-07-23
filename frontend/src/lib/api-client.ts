@@ -14,6 +14,10 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  if (config.url?.includes("/auth/refresh") || config.url?.includes("/auth/logout")) {
+    return config;
+  }
+
   const accessToken =
     useAuthStore.getState().accessToken;
 
