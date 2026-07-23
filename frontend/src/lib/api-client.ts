@@ -1,18 +1,24 @@
 import axios from "axios";
+
 import { useAuthStore } from "@/stores/auth-store";
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL || "/api/v1";
+
 export const apiClient = axios.create({
-  baseURL: "/api/v1",
+  baseURL: apiBaseUrl,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 apiClient.interceptors.request.use((config) => {
-  const accessToken = useAuthStore.getState().accessToken;
+  const accessToken =
+    useAuthStore.getState().accessToken;
 
   if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+    config.headers.Authorization =
+      `Bearer ${accessToken}`;
   }
 
   return config;

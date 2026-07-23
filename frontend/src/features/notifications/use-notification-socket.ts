@@ -64,7 +64,9 @@ export function useNotificationSocket() {
         }
 
         const client = new Client({
-            brokerURL: "ws://localhost:8080/ws",
+            brokerURL:
+                import.meta.env.VITE_WS_URL ||
+                "ws://localhost:8080/ws",
 
             connectHeaders: {
                 Authorization: `Bearer ${accessToken}`,
