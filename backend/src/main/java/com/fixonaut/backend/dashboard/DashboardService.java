@@ -4,7 +4,10 @@ import com.fixonaut.backend.billing.InvoiceRepository;
 import com.fixonaut.backend.security.AuthenticatedUserContext;
 import com.fixonaut.backend.service.ServiceRequestRepository;
 import com.fixonaut.backend.service.ServiceRequestStatus;
+import com.fixonaut.backend.service.ServiceRequestStatusHistoryEntity;
+import com.fixonaut.backend.service.ServiceRequestStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,9 @@ public class DashboardService {
 
     private final AuthenticatedUserContext
             authenticatedUserContext;
+
+    private final ServiceRequestStatusHistoryRepository
+            statusHistoryRepository;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getSummary() {
@@ -105,5 +111,53 @@ public class DashboardService {
                 completedThisWeek,
                 pendingPayments
         );
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<DashboardActivityResponse>
+    getRecentActivity() {
+        UUID organizationId =
+                authenticatedUserContext
+                        .getCurrentOrganizationId();
+
+        return statusHistoryRepository
+                .findRecentOrganizationActivity(
+                        organizationId,
+                        PageRequest.of(0, 10)
+                )
+                .map(this::toActivityResponse)
+                .getContent();
+    }
+
+    private DashboardActivityResponse toActivityResponse(
+            ServiceRequestStatusHistoryEntity history
+    ) {
+        return new DashboardActivityResponse(
+                history.getId(),
+                history.getServiceRequest().getId(),
+                history.getServiceRequest().getTitle(),
+                history.getFromStatus(),
+                history.getToStatus(),
+                history.getNote(),
+                history.getChangedByUser().getName(),
+                history.getChangedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<StatusMetricResponse>
+    getStatusDistribution() {
+        UUID organizationId =
+                authenticatedUserContext
+                        .getCurrentOrganizationId();
+
+        return serviceRequestRepository
+                .countByStatus(organizationId)
+                .stream()
+                .map(row -> new StatusMetricResponse(
+                        (ServiceRequestStatus) row[0],
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
     }
 }

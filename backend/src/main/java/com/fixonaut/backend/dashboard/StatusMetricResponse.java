@@ -1,4 +1,9 @@
 package com.fixonaut.backend.dashboard;
 
-public class StatusMetricResponse {
+import com.fixonaut.backend.service.ServiceRequestStatus;
+
+public record StatusMetricResponse(
+        ServiceRequestStatus status,
+        long count
+) {
 }

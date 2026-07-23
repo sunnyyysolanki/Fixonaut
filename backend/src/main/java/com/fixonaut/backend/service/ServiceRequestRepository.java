@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,5 +97,16 @@ public interface ServiceRequestRepository
             @Param("organizationId") UUID organizationId,
             @Param("start") Instant start,
             @Param("end") Instant end
+    );
+
+    @Query("""
+        SELECT request.status, COUNT(request)
+        FROM ServiceRequestEntity request
+        WHERE request.organization.id = :organizationId
+        GROUP BY request.status
+        ORDER BY request.status
+        """)
+    List<Object[]> countByStatus(
+            @Param("organizationId") UUID organizationId
     );
 }
