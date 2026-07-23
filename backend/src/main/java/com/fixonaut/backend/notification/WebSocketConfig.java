@@ -8,25 +8,14 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import org.springframework.beans.factory.annotation.Value;
-
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig
         implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketJwtInterceptor
             webSocketJwtInterceptor;
-    private final String allowedOrigins;
-
-    public WebSocketConfig(
-            WebSocketJwtInterceptor webSocketJwtInterceptor,
-            @Value("${fixonaut.cors.allowed-origins}")
-            String allowedOrigins
-    ) {
-        this.webSocketJwtInterceptor = webSocketJwtInterceptor;
-        this.allowedOrigins = allowedOrigins;
-    }
 
     @Override
     public void configureMessageBroker(
@@ -53,7 +42,8 @@ public class WebSocketConfig
         registry
                 .addEndpoint("/ws")
                 .setAllowedOrigins(
-                        allowedOrigins.split(",")
+                        "http://localhost:5173",
+                        "https://fixonaut-ochre.vercel.app"
                 );
     }
 
