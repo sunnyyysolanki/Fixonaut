@@ -45,7 +45,7 @@ function CreateInvoicePage() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<InvoiceFormValues>({
-    resolver: zodResolver(invoiceSchema),
+    resolver: zodResolver(invoiceSchema) as any,
     defaultValues: {
       discountAmount: 0,
       taxAmount: 0,
@@ -120,8 +120,8 @@ function CreateInvoicePage() {
     setServerError(null);
 
     const request: CreateInvoiceValues = {
-      serviceRequestId,
-      quoteId,
+      serviceRequestId: serviceRequestId!,
+      quoteId: quoteId!,
       discountAmount: values.discountAmount,
       taxAmount: values.taxAmount,
       notes: values.notes,

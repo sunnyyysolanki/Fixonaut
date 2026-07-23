@@ -60,7 +60,7 @@ function CreateQuotePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteSchema),
+    resolver: zodResolver(quoteSchema) as any,
     defaultValues: {
       serviceRequestId: "",
       validUntil: "",
