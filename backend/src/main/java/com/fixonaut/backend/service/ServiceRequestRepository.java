@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,5 +64,37 @@ public interface ServiceRequestRepository
     boolean existsByIdAndOrganizationId(
             @Param("requestId") UUID requestId,
             @Param("organizationId") UUID organizationId
+    );
+
+    long countByOrganizationIdAndStatusIn(
+            UUID organizationId,
+            Collection<ServiceRequestStatus> statuses
+    );
+    @Query("""
+        SELECT COUNT(request)
+        FROM ServiceRequestEntity request
+        WHERE request.organization.id = :organizationId
+          AND request.status = com.fixonaut.backend.service.ServiceRequestStatus.ASSIGNED
+          AND request.scheduledAt >= :start
+          AND request.scheduledAt < :end
+        """)
+    long countAssignedToday(
+            @Param("organizationId") UUID organizationId,
+            @Param("start") Instant start,
+            @Param("end") Instant end
+    );
+
+    @Query("""
+        SELECT COUNT(request)
+        FROM ServiceRequestEntity request
+        WHERE request.organization.id = :organizationId
+          AND request.status = com.fixonaut.backend.service.ServiceRequestStatus.COMPLETED
+          AND request.updatedAt >= :start
+          AND request.updatedAt < :end
+        """)
+    long countCompletedBetween(
+            @Param("organizationId") UUID organizationId,
+            @Param("start") Instant start,
+            @Param("end") Instant end
     );
 }

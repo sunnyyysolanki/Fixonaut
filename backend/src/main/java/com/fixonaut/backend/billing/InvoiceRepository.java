@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -85,5 +86,19 @@ public interface InvoiceRepository
             @Param("paymentStatus") PaymentStatus paymentStatus,
             @Param("search") String search,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(
+            SUM(invoice.totalAmount - invoice.amountPaid),
+            0
+        )
+        FROM InvoiceEntity invoice
+        WHERE invoice.organization.id = :organizationId
+          AND invoice.status <> com.fixonaut.backend.billing.InvoiceStatus.CANCELLED
+          AND invoice.paymentStatus <> com.fixonaut.backend.billing.PaymentStatus.PAID
+        """)
+    BigDecimal calculatePendingPayments(
+            @Param("organizationId") UUID organizationId
     );
 }
