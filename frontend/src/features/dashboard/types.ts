@@ -17,3 +17,8 @@ export type DashboardActivity = {
   changedByUserName: string;
   changedAt: string;
 };
+
+export type StatusMetric = {
+  status: ServiceRequestStatus;
+  count: number;
+};

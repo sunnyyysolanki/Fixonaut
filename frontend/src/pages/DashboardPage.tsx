@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import {
   useDashboardActivity,
   useDashboardSummary,
+  useStatusDistribution,
 } from "@/features/dashboard/api/use-dashboard";
+import ServiceRequestStatusChart from "@/features/dashboard/ServiceRequestStatusChart";
 
 function DashboardPage() {
   const summaryQuery = useDashboardSummary();
   const activityQuery = useDashboardActivity();
+  const statusDistributionQuery = useStatusDistribution();
 
   return (
     <section className="space-y-8">
@@ -69,6 +72,38 @@ function DashboardPage() {
             />
           </div>
         )}
+
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-white">
+            Service request distribution
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-400">
+            Current workload grouped by request status.
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          {statusDistributionQuery.isLoading && (
+            <div className="h-72 animate-pulse rounded-xl bg-slate-950" />
+          )}
+
+          {statusDistributionQuery.isError && (
+            <p className="text-sm text-red-400">
+              Unable to load status distribution.
+            </p>
+          )}
+
+          {!statusDistributionQuery.isLoading &&
+            !statusDistributionQuery.isError &&
+            statusDistributionQuery.data && (
+              <ServiceRequestStatusChart
+                metrics={statusDistributionQuery.data}
+              />
+            )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
