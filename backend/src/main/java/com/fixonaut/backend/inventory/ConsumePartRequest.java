@@ -1,5 +1,6 @@
 package com.fixonaut.backend.inventory;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -20,6 +21,7 @@ public record ConsumePartRequest(
         Integer quantity,
 
         @NotNull(message = "Unit cost is required")
+        @DecimalMin(value = "0.00", message = "Unit cost cannot be negative")
         BigDecimal unitCost,
 
         @Size(

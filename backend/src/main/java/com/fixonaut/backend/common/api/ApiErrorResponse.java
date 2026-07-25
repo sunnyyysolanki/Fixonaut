@@ -3,7 +3,7 @@ package com.fixonaut.backend.common.api;
 import java.util.Map;
 
 public record ApiErrorResponse(
-        Integer timestamp,
+        long timestamp,
         int status,
         String code,
         String message,

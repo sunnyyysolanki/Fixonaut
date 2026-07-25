@@ -169,6 +169,10 @@ public class AppointmentEntity {
         this.endsAt = endsAt;
     }
 
+    public void updateNotes(String notes) {
+        this.notes = notes;
+    }
+
     private void requireStatus(
             AppointmentStatus expected,
             String message

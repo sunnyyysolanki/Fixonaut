@@ -4,6 +4,7 @@ import com.fixonaut.backend.common.api.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,7 +30,7 @@ public class GlobalExceptionHandler {
         }
 
         ApiErrorResponse response=new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
                 "Request validation failed",
@@ -48,7 +49,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.NOT_FOUND.value(),
                 "RESOURCE_NOT_FOUND",
                 exception.getMessage(),
@@ -68,7 +69,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.CONFLICT.value(),
                 "BUSINESS_RULE_VIOLATION",
                 exception.getMessage(),
@@ -82,13 +83,53 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgumentError(
+            IllegalArgumentException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now().toEpochMilli(),
+                HttpStatus.BAD_REQUEST.value(),
+                "BAD_REQUEST",
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of(),
+                UUID.randomUUID().toString()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDeniedError(
+            AccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now().toEpochMilli(),
+                HttpStatus.FORBIDDEN.value(),
+                "ACCESS_DENIED",
+                "You do not have permission to perform this action",
+                request.getRequestURI(),
+                Map.of(),
+                UUID.randomUUID().toString()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedError(
             Exception exception,
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected error occurred",
@@ -108,7 +149,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.CONFLICT.value(),
                 exception.getCode(),
                 exception.getMessage(),
@@ -128,7 +169,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.UNAUTHORIZED.value(),
                 "INVALID_CREDENTIALS",
                 exception.getMessage(),
@@ -148,7 +189,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.FORBIDDEN.value(),
                 "FORBIDDEN",
                 exception.getMessage(),
@@ -168,7 +209,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                Instant.now().getNano(),
+                Instant.now().toEpochMilli(),
                 HttpStatus.UNAUTHORIZED.value(),
                 "INVALID_TOKEN",
                 exception.getMessage(),

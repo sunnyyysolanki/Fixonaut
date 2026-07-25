@@ -1,6 +1,7 @@
 package com.fixonaut.backend.scheduling;
 
 import com.fixonaut.backend.common.exception.ConflictException;
+import com.fixonaut.backend.common.exception.ForbiddenException;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
@@ -162,6 +163,10 @@ public class SchedulingService {
                 request.endsAt()
         );
 
+        appointment.updateNotes(
+                normalizeNullable(request.notes())
+        );
+
         return toResponse(appointment);
     }
 
@@ -189,6 +194,8 @@ public class SchedulingService {
                         appointmentId
                 );
 
+        validateAppointmentActor(appointment);
+
         appointment.confirm();
 
         return toResponse(appointment);
@@ -202,6 +209,8 @@ public class SchedulingService {
                 findAppointmentForCurrentOrganization(
                         appointmentId
                 );
+
+        validateAppointmentActor(appointment);
 
         appointment.start();
 
@@ -217,6 +226,8 @@ public class SchedulingService {
                         appointmentId
                 );
 
+        validateAppointmentActor(appointment);
+
         appointment.complete();
 
         return toResponse(appointment);
@@ -230,6 +241,8 @@ public class SchedulingService {
                 findAppointmentForCurrentOrganization(
                         appointmentId
                 );
+
+        validateAppointmentActor(appointment);
 
         appointment.cancel();
 
@@ -433,6 +446,30 @@ public class SchedulingService {
                 appointmentId,
                 organizationId
         );
+    }
+
+    /**
+     * A technician may only act on their own appointment. Owners and admins
+     * (who do not carry the TECHNICIAN role) are unrestricted. Mirrors
+     * ServiceRequestService.validateTransitionActor.
+     */
+    private void validateAppointmentActor(
+            AppointmentEntity appointment
+    ) {
+        if (!authenticatedUserContext.hasRole("TECHNICIAN")) {
+            return;
+        }
+
+        UUID currentUserId =
+                authenticatedUserContext.getCurrentUserId();
+
+        if (!appointment.getTechnician()
+                .getId()
+                .equals(currentUserId)) {
+            throw new ForbiddenException(
+                    "Only the assigned technician can perform this action"
+            );
+        }
     }
 
     private AppointmentResponse toResponse(

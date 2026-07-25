@@ -125,8 +125,16 @@ public class PartEntity {
     ) {
         this.sku = sku;
         this.name = name;
-        this.unit = unit;
-        this.reorderLevel = reorderLevel;
+
+        // Preserve existing values when the update omits them, so a
+        // partial update can never null out NOT NULL / unboxed columns.
+        if (unit != null) {
+            this.unit = unit;
+        }
+
+        if (reorderLevel != null) {
+            this.reorderLevel = reorderLevel;
+        }
     }
 
     public void deactivate() {
