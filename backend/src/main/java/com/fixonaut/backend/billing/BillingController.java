@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -66,6 +67,23 @@ public class BillingController {
     ) {
         return ResponseEntity.ok(
                 billingService.getQuote(quoteId)
+        );
+    }
+
+    @GetMapping("/service-requests/{serviceRequestId}/quotes")
+    @PreAuthorize("""
+            hasAnyRole(
+                'OWNER',
+                'ADMIN',
+                'DISPATCHER',
+                'TECHNICIAN'
+            )
+            """)
+    public ResponseEntity<List<QuoteResponse>> listQuotesForServiceRequest(
+            @PathVariable UUID serviceRequestId
+    ) {
+        return ResponseEntity.ok(
+                billingService.listQuotesForServiceRequest(serviceRequestId)
         );
     }
 

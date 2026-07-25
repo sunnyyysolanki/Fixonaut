@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -94,6 +95,23 @@ public class BillingService {
         return toQuoteResponse(
                 findQuote(quoteId, organizationId)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuoteResponse> listQuotesForServiceRequest(
+            UUID serviceRequestId
+    ) {
+        UUID organizationId =
+                authenticatedUserContext.getCurrentOrganizationId();
+
+        return quoteRepository
+                .findAllByServiceRequestAndOrganization(
+                        serviceRequestId,
+                        organizationId
+                )
+                .stream()
+                .map(this::toQuoteResponse)
+                .toList();
     }
 
     @Transactional

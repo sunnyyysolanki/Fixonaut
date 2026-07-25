@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,6 +31,18 @@ public interface QuoteRepository
             """)
     Optional<QuoteEntity>
     findLatestByServiceRequestAndOrganization(
+            @Param("serviceRequestId") UUID serviceRequestId,
+            @Param("organizationId") UUID organizationId
+    );
+
+    @Query("""
+            SELECT quote
+            FROM QuoteEntity quote
+            WHERE quote.serviceRequest.id = :serviceRequestId
+              AND quote.organization.id = :organizationId
+            ORDER BY quote.createdAt DESC
+            """)
+    List<QuoteEntity> findAllByServiceRequestAndOrganization(
             @Param("serviceRequestId") UUID serviceRequestId,
             @Param("organizationId") UUID organizationId
     );
