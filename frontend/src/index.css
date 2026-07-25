@@ -14,11 +14,21 @@ body {
   min-height: 100vh;
 }
 
-input[type="datetime-local"] {
+/* Theme every native date/time picker for the dark UI so the calendar/clock
+   icon is visible and the popup is readable and easy to select. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
   color-scheme: dark;
 }
 
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: invert(0.5) sepia(1) saturate(5) hue-rotate(15deg);
   padding: 4px;
@@ -26,6 +36,10 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   transition: background-color 0.2s;
 }
 
-input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="week"]::-webkit-calendar-picker-indicator:hover {
   background-color: rgba(249, 115, 22, 0.15);
 }

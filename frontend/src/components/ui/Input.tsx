@@ -3,10 +3,12 @@ import { forwardRef, type InputHTMLAttributes } from "react";
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
+  /** Optional helper text shown under the field when there is no error. */
+  hint?: string;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, id, className = "", ...props },
+  { label, error, hint, id, className = "", ...props },
   ref,
 ) {
   const inputId = id ?? props.name;
@@ -33,7 +35,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         {...props}
       />
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error ? (
+        <p className="text-sm text-red-400">{error}</p>
+      ) : hint ? (
+        <p className="text-xs text-slate-500">{hint}</p>
+      ) : null}
     </div>
   );
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useParams } from "react-router-dom";
 
@@ -11,7 +11,10 @@ import {
   usePart,
   usePartTransactions,
   useStockIn,
+  useUpdatePart,
 } from "@/features/inventory/api/use-inventory";
+import type { UpdatePartValues } from "@/features/inventory/types";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function PartDetailPage() {
   const { partId } = useParams<{ partId: string }>();
@@ -24,6 +27,24 @@ function PartDetailPage() {
   const partQuery = usePart(partId ?? "");
   const transactionsQuery = usePartTransactions(partId ?? "");
   const stockInMutation = useStockIn();
+  const updateMutation = useUpdatePart();
+
+  const canManageParts = useHasAnyRole("OWNER", "ADMIN");
+
+  const [editName, setEditName] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editReorderLevel, setEditReorderLevel] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSeeded, setEditSeeded] = useState(false);
+
+  useEffect(() => {
+    if (partQuery.data && !editSeeded) {
+      setEditName(partQuery.data.name);
+      setEditUnit(partQuery.data.unit);
+      setEditReorderLevel(String(partQuery.data.reorderLevel));
+      setEditSeeded(true);
+    }
+  }, [partQuery.data, editSeeded]);
 
   if (partQuery.isLoading) {
     return (
@@ -100,6 +121,50 @@ function PartDetailPage() {
     }
   }
 
+  async function handleUpdate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEditError(null);
+
+    if (!partId) {
+      return;
+    }
+
+    const parsedReorder = Number(editReorderLevel);
+
+    if (!editName.trim()) {
+      setEditError("Name is required.");
+      return;
+    }
+
+    if (!editUnit.trim()) {
+      setEditError("Unit is required.");
+      return;
+    }
+
+    if (!Number.isInteger(parsedReorder) || parsedReorder < 0) {
+      setEditError("Reorder level must be zero or greater.");
+      return;
+    }
+
+    const values: UpdatePartValues = {
+      name: editName.trim(),
+      unit: editUnit.trim(),
+      reorderLevel: parsedReorder,
+    };
+
+    try {
+      await updateMutation.mutateAsync({ partId, values });
+    } catch (requestError) {
+      if (isAxiosError(requestError)) {
+        setEditError(
+          requestError.response?.data?.message ?? "Unable to update part",
+        );
+      } else {
+        setEditError("Unable to update part");
+      }
+    }
+  }
+
   return (
     <section className="mx-auto max-w-5xl space-y-6">
       <header>
@@ -134,6 +199,7 @@ function PartDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {canManageParts && (
         <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold text-white">Add stock</h2>
@@ -198,6 +264,7 @@ function PartDetailPage() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -219,6 +286,58 @@ function PartDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {canManageParts && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold text-white">Edit details</h2>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Update the part name, unit, and reorder level.
+            </p>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleUpdate} className="space-y-5">
+              <Input
+                label="Name"
+                value={editName}
+                onChange={(event) => setEditName(event.target.value)}
+              />
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Input
+                  label="Unit"
+                  value={editUnit}
+                  onChange={(event) => setEditUnit(event.target.value)}
+                />
+
+                <Input
+                  label="Reorder level"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editReorderLevel}
+                  onChange={(event) => setEditReorderLevel(event.target.value)}
+                />
+              </div>
+
+              {editError && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-300"
+                >
+                  {editError}
+                </div>
+              )}
+
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Saving..." : "Save changes"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

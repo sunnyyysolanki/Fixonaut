@@ -3,7 +3,7 @@ import { isAxiosError } from "axios";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -17,6 +17,8 @@ import type {
   BillingItemType,
   CreateQuoteValues,
 } from "@/features/billing/types";
+import { QuickPicks } from "@/components/ui/QuickPicks";
+import { addDays, toDateValue } from "@/lib/datetime";
 
 const quoteItemSchema = z.object({
   itemType: z.enum(["LABOR", "PART", "OTHER"]),
@@ -43,6 +45,7 @@ type QuoteFormValues = z.infer<typeof quoteSchema>;
 
 function CreateQuotePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const createQuoteMutation = useCreateQuote();
@@ -58,11 +61,12 @@ function CreateQuotePage() {
     control,
     watch,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as any,
     defaultValues: {
-      serviceRequestId: "",
+      serviceRequestId: searchParams.get("serviceRequestId") ?? "",
       validUntil: "",
       discountAmount: 0,
       taxAmount: 0,
@@ -192,12 +196,40 @@ function CreateQuotePage() {
               )}
             </div>
 
-            <Input
-              label="Valid until"
-              type="date"
-              error={errors.validUntil?.message}
-              {...register("validUntil")}
-            />
+            <div className="space-y-2">
+              <Input
+                label="Valid until"
+                type="date"
+                min={toDateValue(new Date())}
+                hint="Optional — how long this estimate stays valid."
+                error={errors.validUntil?.message}
+                {...register("validUntil")}
+              />
+
+              <QuickPicks
+                label="Quick pick:"
+                options={[
+                  {
+                    label: "+7 days",
+                    value: toDateValue(addDays(new Date(), 7)),
+                  },
+                  {
+                    label: "+30 days",
+                    value: toDateValue(addDays(new Date(), 30)),
+                  },
+                  {
+                    label: "+90 days",
+                    value: toDateValue(addDays(new Date(), 90)),
+                  },
+                ]}
+                onPick={(value) =>
+                  setValue("validUntil", value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              />
+            </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">

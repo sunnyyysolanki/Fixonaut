@@ -7,6 +7,7 @@ import {
 import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { PublicOnlyRoute } from "@/app/PublicOnlyRoute";
 import { AppLayout } from "@/layouts/AppLayout";
+import { useAuthStore } from "@/stores/auth-store";
 import CustomersPage from "@/pages/CustomersPage";
 import DashboardPage from "@/pages/DashboardPage";
 import InventoryPage from "@/pages/InventoryPage";
@@ -19,10 +20,12 @@ import CreateCustomerPage from "@/pages/CreateCustomerPage";
 import CustomerDetailPage from "@/pages/CustomerDetailPage";
 import EditCustomerPage from "@/pages/EditCustomerPage";
 import CreateTechnicianPage from "@/pages/CreateTechnicianPage";
+import EditTechnicianPage from "@/pages/EditTechnicianPage";
 import ServiceRequestDetailPage from "@/pages/ServiceRequestPlaceholderPage";
 import CreateServiceRequestPage from "@/pages/CreateServiceRequestPage";
 import SchedulePage from "@/pages/SchedulePage";
 import CreateAppointmentPage from "@/pages/CreateAppointmentPage";
+import AppointmentDetailPage from "@/pages/AppointmentDetailPage";
 import TechnicianAvailabilityPage from "@/pages/TechnicianAvailabilityPage";
 import CreatePartPage from "@/pages/CreatePartPage";
 import PartDetailPage from "@/pages/PartDetailPage";
@@ -58,7 +61,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: <HomeRedirect />,
       },
       {
         path: "dashboard",
@@ -101,6 +104,10 @@ const router = createBrowserRouter([
         element: <CreateTechnicianPage />,
       },
       {
+        path: "technicians/:technicianId/edit",
+        element: <EditTechnicianPage />,
+      },
+      {
         path: "technicians/:technicianId/availability",
         element: <TechnicianAvailabilityPage />,
       },
@@ -125,6 +132,10 @@ const router = createBrowserRouter([
         element: <CreateAppointmentPage />,
       },
       {
+        path: "appointments/:appointmentId",
+        element: <AppointmentDetailPage />,
+      },
+      {
         path: "invoices",
         element: <InvoicesPage />,
       },
@@ -147,6 +158,19 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+// Technicians can't access the dashboard endpoints, so send them to the
+// screen they actually work from instead of a page full of 403 errors.
+function HomeRedirect() {
+  const roles = useAuthStore((state) => state.user?.roles ?? []);
+
+  const isStaff =
+    roles.includes("OWNER") ||
+    roles.includes("ADMIN") ||
+    roles.includes("DISPATCHER");
+
+  return <Navigate to={isStaff ? "/dashboard" : "/service-requests"} replace />;
+}
 
 export function AppRouter() {
   return <RouterProvider router={router} />;

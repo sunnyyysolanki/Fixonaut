@@ -11,6 +11,7 @@ import type {
   ServiceRequestStatus,
 } from "@/features/service-requests/types";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function ServiceRequestsPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -31,6 +32,8 @@ function ServiceRequestsPage() {
   const { data, isLoading, isError, error } = useServiceRequests(filters);
 
   const requests = data?.content ?? [];
+
+  const canCreateRequest = useHasAnyRole("OWNER", "ADMIN", "DISPATCHER");
 
   function resetPage() {
     setPage(0);
@@ -98,12 +101,14 @@ function ServiceRequestsPage() {
             options={["LOW", "NORMAL", "HIGH", "URGENT"]}
           />
 
-          <Link
-            to="/service-requests/new"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-          >
-            + New request
-          </Link>
+          {canCreateRequest && (
+            <Link
+              to="/service-requests/new"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+            >
+              + New request
+            </Link>
+          )}
         </div>
       </header>
 
@@ -134,12 +139,14 @@ function ServiceRequestsPage() {
               Create a request to begin tracking service work.
             </p>
 
-            <Link
-              to="/service-requests/new"
-              className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-            >
-              + Create request
-            </Link>
+            {canCreateRequest && (
+              <Link
+                to="/service-requests/new"
+                className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              >
+                + Create request
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}

@@ -16,6 +16,8 @@ import {
   useTechnicianAvailability,
 } from "@/features/scheduling/api/use-scheduling";
 
+import { useHasAnyRole } from "@/hooks/use-roles";
+
 const days = [
   { value: 1, label: "Monday" },
   { value: 2, label: "Tuesday" },
@@ -48,6 +50,8 @@ function TechnicianAvailabilityPage() {
 
   const createMutation =
     useCreateTechnicianAvailability();
+
+  const canManageAvailability = useHasAnyRole("OWNER", "ADMIN");
 
   const technician = techniciansQuery.data?.content.find(
     (item) => item.id === technicianId,
@@ -113,6 +117,7 @@ function TechnicianAvailabilityPage() {
         </p>
       </header>
 
+      {canManageAvailability && (
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-white">
@@ -160,6 +165,7 @@ function TechnicianAvailabilityPage() {
               <Input
                 label="Start time"
                 type="time"
+                hint="Working hours start."
                 value={startTime}
                 onChange={(event) =>
                   setStartTime(event.target.value)
@@ -169,11 +175,34 @@ function TechnicianAvailabilityPage() {
               <Input
                 label="End time"
                 type="time"
+                hint="Working hours end."
                 value={endTime}
                 onChange={(event) =>
                   setEndTime(event.target.value)
                 }
               />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-500">Presets:</span>
+
+              {[
+                { label: "Morning (09:00–13:00)", start: "09:00", end: "13:00" },
+                { label: "Full day (09:00–18:00)", start: "09:00", end: "18:00" },
+                { label: "Evening (14:00–20:00)", start: "14:00", end: "20:00" },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => {
+                    setStartTime(preset.start);
+                    setEndTime(preset.end);
+                  }}
+                  className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-orange-500 hover:text-orange-300"
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
 
             {error && (
@@ -196,6 +225,7 @@ function TechnicianAvailabilityPage() {
           </form>
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>

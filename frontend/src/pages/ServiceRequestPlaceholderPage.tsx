@@ -55,16 +55,12 @@ function ServiceRequestDetailPage() {
   const cancelMutation = useCancelServiceRequest();
 
   const userRoles = useAuthStore((state) => state.user?.roles ?? []);
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   const canAssign =
     userRoles.includes("OWNER") ||
     userRoles.includes("ADMIN") ||
     userRoles.includes("DISPATCHER");
-
-  const canOperate =
-    userRoles.includes("OWNER") ||
-    userRoles.includes("ADMIN") ||
-    userRoles.includes("TECHNICIAN");
 
   if (requestQuery.isLoading) {
     return (
@@ -99,6 +95,14 @@ function ServiceRequestDetailPage() {
 
   const request = requestQuery.data;
   const technicians = techniciansQuery.data?.content ?? [];
+
+  // Owners/admins can operate any job; a technician only their own assigned job
+  // (mirrors the backend "assigned technician only" rule).
+  const canOperate =
+    userRoles.includes("OWNER") ||
+    userRoles.includes("ADMIN") ||
+    (userRoles.includes("TECHNICIAN") &&
+      request.assignedTechnicianId === currentUserId);
 
   const isBusy =
     assignMutation.isPending ||

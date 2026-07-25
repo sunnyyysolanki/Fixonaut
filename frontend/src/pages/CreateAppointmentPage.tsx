@@ -16,6 +16,14 @@ import { useTechnicians } from "@/features/technicians/api/use-technicians";
 import { useCreateAppointment } from "@/features/scheduling/api/use-scheduling";
 
 import type { CreateAppointmentValues } from "@/features/scheduling/types";
+import { QuickPicks } from "@/components/ui/QuickPicks";
+import {
+  addDays,
+  addHours,
+  atHour,
+  nextHour,
+  toDateTimeLocalValue,
+} from "@/lib/datetime";
 
 const appointmentSchema = z
   .object({
@@ -61,6 +69,8 @@ function CreateAppointmentPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentSchema),
@@ -72,6 +82,24 @@ function CreateAppointmentPage() {
       notes: "",
     },
   });
+
+  const startsAtValue = watch("startsAt");
+
+  function applyDuration(hours: number) {
+    const base = startsAtValue ? new Date(startsAtValue) : nextHour();
+
+    if (!startsAtValue) {
+      setValue("startsAt", toDateTimeLocalValue(base), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    setValue("endsAt", toDateTimeLocalValue(addHours(base, hours)), {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  }
 
   async function onSubmit(values: AppointmentFormValues) {
     setServerError(null);
@@ -210,19 +238,58 @@ function CreateAppointmentPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Input
-                label="Start time"
-                type="datetime-local"
-                error={errors.startsAt?.message}
-                {...register("startsAt")}
-              />
+              <div className="space-y-2">
+                <Input
+                  label="Start time"
+                  type="datetime-local"
+                  min={toDateTimeLocalValue(new Date())}
+                  hint="When the technician should arrive."
+                  error={errors.startsAt?.message}
+                  {...register("startsAt")}
+                />
 
-              <Input
-                label="End time"
-                type="datetime-local"
-                error={errors.endsAt?.message}
-                {...register("endsAt")}
-              />
+                <QuickPicks
+                  options={[
+                    {
+                      label: "Next hour",
+                      value: toDateTimeLocalValue(nextHour()),
+                    },
+                    {
+                      label: "Tomorrow 9 AM",
+                      value: toDateTimeLocalValue(
+                        atHour(addDays(new Date(), 1), 9),
+                      ),
+                    },
+                  ]}
+                  onPick={(value) =>
+                    setValue("startsAt", value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Input
+                  label="End time"
+                  type="datetime-local"
+                  min={startsAtValue || toDateTimeLocalValue(new Date())}
+                  hint="Must be after the start time."
+                  error={errors.endsAt?.message}
+                  {...register("endsAt")}
+                />
+
+                <QuickPicks
+                  label="Duration:"
+                  options={[
+                    { label: "+1 hour", value: "1" },
+                    { label: "+2 hours", value: "2" },
+                    { label: "+4 hours", value: "4" },
+                  ]}
+                  onPick={(value) => applyDuration(Number(value))}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

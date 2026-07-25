@@ -10,6 +10,7 @@ import { useParts } from "@/features/inventory/api/use-inventory";
 import type { Part } from "@/features/inventory/types";
 
 import { useDebounce } from "@/hooks/use-debounce";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function InventoryPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -24,6 +25,8 @@ function InventoryPage() {
   });
 
   const parts = data?.content ?? [];
+
+  const canManageParts = useHasAnyRole("OWNER", "ADMIN");
 
   function handleSearchChange(value: string) {
     setSearchInput(value);
@@ -53,12 +56,14 @@ function InventoryPage() {
             />
           </div>
 
-          <Link
-            to="/inventory/new"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-          >
-            + New part
-          </Link>
+          {canManageParts && (
+            <Link
+              to="/inventory/new"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+            >
+              + New part
+            </Link>
+          )}
         </div>
       </header>
 
@@ -85,12 +90,14 @@ function InventoryPage() {
               Add your first spare part to begin tracking stock.
             </p>
 
-            <Link
-              to="/inventory/new"
-              className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-            >
-              + Create part
-            </Link>
+            {canManageParts && (
+              <Link
+                to="/inventory/new"
+                className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              >
+                + Create part
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}

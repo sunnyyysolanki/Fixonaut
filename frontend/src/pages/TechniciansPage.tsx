@@ -10,6 +10,7 @@ import { useTechnicians } from "@/features/technicians/api/use-technicians";
 import type { Technician } from "@/features/technicians/types";
 
 import { useDebounce } from "@/hooks/use-debounce";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function TechniciansPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -24,6 +25,8 @@ function TechniciansPage() {
   });
 
   const technicians = data?.content ?? [];
+
+  const canManageTechnicians = useHasAnyRole("OWNER", "ADMIN");
 
   function handleSearchChange(value: string) {
     setSearchInput(value);
@@ -53,12 +56,14 @@ function TechniciansPage() {
             />
           </div>
 
-          <Link
-            to="/technicians/new"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-          >
-            + New technician
-          </Link>
+          {canManageTechnicians && (
+            <Link
+              to="/technicians/new"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+            >
+              + New technician
+            </Link>
+          )}
         </div>
       </header>
 
@@ -91,21 +96,29 @@ function TechniciansPage() {
               Create your first technician to assign service requests.
             </p>
 
-            <Link
-              to="/technicians/new"
-              className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-            >
-              + Create technician
-            </Link>
+            {canManageTechnicians && (
+              <Link
+                to="/technicians/new"
+                className="mt-6 inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              >
+                + Create technician
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}
 
       {!isLoading && !isError && technicians.length > 0 && (
         <>
-          <TechnicianDesktopTable technicians={technicians} />
+          <TechnicianDesktopTable
+            technicians={technicians}
+            canManage={canManageTechnicians}
+          />
 
-          <TechnicianMobileCards technicians={technicians} />
+          <TechnicianMobileCards
+            technicians={technicians}
+            canManage={canManageTechnicians}
+          />
 
           <Pagination
             currentPage={page}
@@ -123,8 +136,10 @@ function TechniciansPage() {
 
 function TechnicianDesktopTable({
   technicians,
+  canManage,
 }: {
   technicians: Technician[];
+  canManage: boolean;
 }) {
   return (
     <Card className="hidden overflow-hidden md:block">
@@ -178,12 +193,23 @@ function TechnicianDesktopTable({
                 </td>
 
                 <td className="px-6 py-4">
-                  <Link
-                    to={`/technicians/${technician.id}/availability`}
-                    className="whitespace-nowrap text-orange-400 hover:text-orange-300"
-                  >
-                    Availability
-                  </Link>
+                  <div className="flex gap-3">
+                    <Link
+                      to={`/technicians/${technician.id}/availability`}
+                      className="whitespace-nowrap text-orange-400 hover:text-orange-300"
+                    >
+                      Availability
+                    </Link>
+
+                    {canManage && (
+                      <Link
+                        to={`/technicians/${technician.id}/edit`}
+                        className="whitespace-nowrap text-slate-300 hover:text-white"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -194,7 +220,13 @@ function TechnicianDesktopTable({
   );
 }
 
-function TechnicianMobileCards({ technicians }: { technicians: Technician[] }) {
+function TechnicianMobileCards({
+  technicians,
+  canManage,
+}: {
+  technicians: Technician[];
+  canManage: boolean;
+}) {
   return (
     <div className="grid gap-4 md:hidden">
       {technicians.map((technician) => (
@@ -222,12 +254,23 @@ function TechnicianMobileCards({ technicians }: { technicians: Technician[] }) {
               <p>{technician.skills ?? "No skills specified"}</p>
             </div>
 
-            <Link
-              to={`/technicians/${technician.id}/availability`}
-              className="inline-flex text-sm text-orange-400 hover:text-orange-300"
-            >
-              Manage availability →
-            </Link>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                to={`/technicians/${technician.id}/availability`}
+                className="inline-flex text-sm text-orange-400 hover:text-orange-300"
+              >
+                Manage availability →
+              </Link>
+
+              {canManage && (
+                <Link
+                  to={`/technicians/${technician.id}/edit`}
+                  className="inline-flex text-sm text-slate-300 hover:text-white"
+                >
+                  Edit
+                </Link>
+              )}
+            </div>
           </CardContent>
         </Card>
       ))}

@@ -13,6 +13,7 @@ import {
 } from "@/features/billing/api/use-billing";
 
 import type { QuoteStatus } from "@/features/billing/types";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function QuoteDetailPage() {
   const { quoteId } = useParams<{
@@ -26,6 +27,8 @@ function QuoteDetailPage() {
   const sendMutation = useSendQuote();
   const approveMutation = useApproveQuote();
   const rejectMutation = useRejectQuote();
+
+  const canManageBilling = useHasAnyRole("OWNER", "ADMIN", "DISPATCHER");
 
   if (quoteQuery.isLoading) {
     return (
@@ -137,13 +140,13 @@ function QuoteDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {quote.status === "DRAFT" && (
+            {canManageBilling && quote.status === "DRAFT" && (
               <Button type="button" onClick={handleSend} disabled={isBusy}>
                 {sendMutation.isPending ? "Sending..." : "Send quote"}
               </Button>
             )}
 
-            {quote.status === "SENT" && (
+            {canManageBilling && quote.status === "SENT" && (
               <>
                 <Button type="button" onClick={handleApprove} disabled={isBusy}>
                   {approveMutation.isPending ? "Approving..." : "Approve"}
@@ -159,7 +162,7 @@ function QuoteDetailPage() {
                 </Button>
               </>
             )}
-            {quote.status === "APPROVED" && (
+            {canManageBilling && quote.status === "APPROVED" && (
               <Link
                 to={`/invoices/new?serviceRequestId=${quote.serviceRequestId}&quoteId=${quote.id}`}
                 className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"

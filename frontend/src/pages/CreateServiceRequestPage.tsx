@@ -3,7 +3,7 @@ import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -14,6 +14,13 @@ import type {
   CreateServiceRequestValues,
   ServiceRequestPriority,
 } from "@/features/service-requests/types";
+import { QuickPicks } from "@/components/ui/QuickPicks";
+import {
+  addDays,
+  atHour,
+  nextHour,
+  toDateTimeLocalValue,
+} from "@/lib/datetime";
 
 const serviceRequestSchema = z.object({
   customerId: z.string().min(1, "Select a customer"),
@@ -39,6 +46,7 @@ type ServiceRequestFormValues = z.infer<typeof serviceRequestSchema>;
 
 function CreateServiceRequestPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const createMutation = useCreateServiceRequest();
@@ -52,11 +60,12 @@ function CreateServiceRequestPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ServiceRequestFormValues>({
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
-      customerId: "",
+      customerId: searchParams.get("customerId") ?? "",
       title: "",
       description: "",
       priority: "NORMAL",
@@ -226,12 +235,44 @@ function CreateServiceRequestPage() {
                 </select>
               </div>
 
-              <Input
-                label="Scheduled date and time"
-                type="datetime-local"
-                error={errors.scheduledAt?.message}
-                {...register("scheduledAt")}
-              />
+              <div className="space-y-2">
+                <Input
+                  label="Scheduled date and time"
+                  type="datetime-local"
+                  min={toDateTimeLocalValue(new Date())}
+                  hint="Optional — when the visit should happen. Click the calendar icon to pick."
+                  error={errors.scheduledAt?.message}
+                  {...register("scheduledAt")}
+                />
+
+                <QuickPicks
+                  label="Quick pick:"
+                  options={[
+                    {
+                      label: "In 1 hour",
+                      value: toDateTimeLocalValue(nextHour()),
+                    },
+                    {
+                      label: "Tomorrow 9 AM",
+                      value: toDateTimeLocalValue(
+                        atHour(addDays(new Date(), 1), 9),
+                      ),
+                    },
+                    {
+                      label: "Next week",
+                      value: toDateTimeLocalValue(
+                        atHour(addDays(new Date(), 7), 9),
+                      ),
+                    },
+                  ]}
+                  onPick={(value) =>
+                    setValue("scheduledAt", value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    })
+                  }
+                />
+              </div>
             </div>
 
             {serverError && (

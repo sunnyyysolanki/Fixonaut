@@ -16,7 +16,7 @@ type NavigationItem = {
 };
 
 const navigation: NavigationItem[] = [
-  { label: "Dashboard", path: "/dashboard" },
+  { label: "Dashboard", path: "/dashboard", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER"] },
   { label: "Customers", path: "/customers", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER"] },
   { label: "Service Requests", path: "/service-requests", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN"] },
   { label: "Schedule", path: "/schedule", allowedRoles: ["OWNER", "ADMIN", "DISPATCHER", "TECHNICIAN"] },

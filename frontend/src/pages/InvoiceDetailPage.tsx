@@ -21,6 +21,7 @@ import type {
   InvoiceStatus,
   PaymentStatus,
 } from "@/features/billing/types";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function InvoiceDetailPage() {
   const { invoiceId } = useParams<{
@@ -35,6 +36,8 @@ function InvoiceDetailPage() {
   const issueMutation = useIssueInvoice();
   const cancelMutation = useCancelInvoice();
   const paymentMutation = useRecordPayment();
+
+  const canCancelInvoice = useHasAnyRole("OWNER", "ADMIN");
 
   if (invoiceQuery.isLoading) {
     return (
@@ -199,7 +202,8 @@ function InvoiceDetailPage() {
               </Button>
             )}
 
-            {invoice.status !== "CANCELLED" &&
+            {canCancelInvoice &&
+              invoice.status !== "CANCELLED" &&
               invoice.paymentStatus !== "PAID" && (
                 <Button
                   type="button"

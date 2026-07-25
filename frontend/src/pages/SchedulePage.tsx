@@ -9,6 +9,7 @@ import type {
   Appointment,
   AppointmentStatus,
 } from "@/features/scheduling/types";
+import { useHasAnyRole } from "@/hooks/use-roles";
 
 function SchedulePage() {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -23,6 +24,8 @@ function SchedulePage() {
   const appointmentsQuery = useAppointments(from, to);
 
   const appointments = appointmentsQuery.data ?? [];
+
+  const canManageSchedule = useHasAnyRole("OWNER", "ADMIN", "DISPATCHER");
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
@@ -67,12 +70,14 @@ function SchedulePage() {
           </Button>
         </div>
 
-        <Link
-          to="/appointments/new"
-          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-        >
-          + New appointment
-        </Link>
+        {canManageSchedule && (
+          <Link
+            to="/appointments/new"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+          >
+            + New appointment
+          </Link>
+        )}
       </header>
 
       <Card>
@@ -173,7 +178,7 @@ function DayColumn({
 function AppointmentCard({ appointment }: { appointment: Appointment }) {
   return (
     <Link
-      to={`/service-requests/${appointment.serviceRequestId}`}
+      to={`/appointments/${appointment.id}`}
       className="block rounded-lg border border-slate-700 bg-slate-900 p-3 transition hover:border-orange-500/60 hover:bg-slate-800"
     >
       <div className="flex items-start justify-between gap-2">
