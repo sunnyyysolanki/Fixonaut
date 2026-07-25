@@ -2,7 +2,7 @@ package com.fixonaut.backend.billing;
 
 import com.fixonaut.backend.common.exception.ConflictException;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
-import com.fixonaut.backend.notification.NotificationRequestedEvent;
+import com.fixonaut.backend.notification.NotificationPublisher;
 import com.fixonaut.backend.notification.NotificationType;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
@@ -12,7 +12,6 @@ import com.fixonaut.backend.service.ServiceRequestRepository;
 import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,7 @@ public class BillingService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
-    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     @Transactional
     public QuoteResponse createQuote(
@@ -124,7 +123,7 @@ public class BillingService {
 
         quote.send();
 
-        notifyAssignedTechnician(
+        notifyBillingEvent(
                 quote.getServiceRequest(),
                 NotificationType.QUOTE_SENT,
                 "Quote sent",
@@ -147,6 +146,16 @@ public class BillingService {
 
         quote.approve();
 
+        notifyBillingEvent(
+                quote.getServiceRequest(),
+                NotificationType.QUOTE_APPROVED,
+                "Quote approved",
+                "A quote was approved for "
+                        + quote.getServiceRequest().getTitle(),
+                "QUOTE",
+                quote.getId()
+        );
+
         return toQuoteResponse(quote);
     }
 
@@ -160,7 +169,7 @@ public class BillingService {
 
         quote.reject();
 
-        notifyAssignedTechnician(
+        notifyBillingEvent(
                 quote.getServiceRequest(),
                 NotificationType.QUOTE_REJECTED,
                 "Quote rejected",
@@ -269,7 +278,7 @@ public class BillingService {
 
         invoice.issue();
 
-        notifyAssignedTechnician(
+        notifyBillingEvent(
                 invoice.getServiceRequest(),
                 NotificationType.INVOICE_ISSUED,
                 "Invoice issued",
@@ -317,7 +326,7 @@ public class BillingService {
 
         invoice.recordPayment(request.amount());
 
-        notifyAssignedTechnician(
+        notifyBillingEvent(
                 invoice.getServiceRequest(),
                 NotificationType.PAYMENT_RECORDED,
                 "Payment recorded",
@@ -556,7 +565,7 @@ public class BillingService {
         );
     }
 
-    private void notifyAssignedTechnician(
+    private void notifyBillingEvent(
             ServiceRequestEntity serviceRequest,
             NotificationType notificationType,
             String title,
@@ -567,22 +576,16 @@ public class BillingService {
         UserEntity assignedTechnician =
                 serviceRequest.getAssignedTechnician();
 
-        if (assignedTechnician == null) {
-            return;
-        }
-
-        eventPublisher.publishEvent(
-                new NotificationRequestedEvent(
-                        serviceRequest
-                                .getOrganization()
-                                .getId(),
-                        assignedTechnician.getId(),
-                        notificationType,
-                        title,
-                        message,
-                        referenceType,
-                        referenceId
-                )
+        notificationPublisher.notifyOffice(
+                serviceRequest.getOrganization().getId(),
+                assignedTechnician == null
+                        ? null
+                        : assignedTechnician.getId(),
+                notificationType,
+                title,
+                message,
+                referenceType,
+                referenceId
         );
     }
 }

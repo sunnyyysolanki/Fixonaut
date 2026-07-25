@@ -23,6 +23,7 @@ public class NotificationService {
     private final AuthenticatedUserContext
             authenticatedUserContext;
     private final OrganizationRepository organizationRepository;
+    private final NotificationPublisher notificationPublisher;
 
 
     @Transactional(readOnly = true)
@@ -83,6 +84,29 @@ public class NotificationService {
 
         return notificationRepository
                 .markAllAsRead(userId);
+    }
+
+    /**
+     * Send a notification to the current user so they can verify the
+     * real-time WebSocket end to end. Runs in a transaction so the
+     * after-commit event listener fires.
+     */
+    @Transactional
+    public void sendTestNotification() {
+        UUID userId =
+                authenticatedUserContext.getCurrentUserId();
+        UUID organizationId =
+                authenticatedUserContext.getCurrentOrganizationId();
+
+        notificationPublisher.notifyUser(
+                organizationId,
+                userId,
+                NotificationType.SERVICE_REQUEST_STATUS_CHANGED,
+                "Test notification",
+                "Real-time notifications are working.",
+                "SYSTEM",
+                userId
+        );
     }
 
     @Transactional

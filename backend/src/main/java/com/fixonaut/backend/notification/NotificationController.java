@@ -58,6 +58,13 @@ public class NotificationController {
         );
     }
 
+    @PostMapping("/test")
+    public ResponseEntity<Void> sendTest() {
+        notificationService.sendTestNotification();
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{notificationId}/read")
     public ResponseEntity<NotificationResponse>
     markAsRead(

@@ -3,7 +3,7 @@ package com.fixonaut.backend.service;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
 import com.fixonaut.backend.customer.CustomerEntity;
 import com.fixonaut.backend.customer.CustomerRepository;
-import com.fixonaut.backend.notification.NotificationRequestedEvent;
+import com.fixonaut.backend.notification.NotificationPublisher;
 import com.fixonaut.backend.notification.NotificationType;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
@@ -12,7 +12,6 @@ import com.fixonaut.backend.user.UserEntity;
 import com.fixonaut.backend.user.UserRepository;
 import com.fixonaut.backend.user.UserRole;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,7 @@ public class ServiceRequestService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
-    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     @Transactional
     public ServiceRequestResponse create(
@@ -169,17 +168,16 @@ public class ServiceRequestService {
                 "Technician assigned"
         );
 
-        eventPublisher.publishEvent(
-                new NotificationRequestedEvent(
-                        organizationId,
-                        technician.getId(),
-                        NotificationType.SERVICE_REQUEST_ASSIGNED,
-                        "New service request assigned",
-                        serviceRequest.getTitle()
-                                + " was assigned to you.",
-                        "SERVICE_REQUEST",
-                        serviceRequest.getId()
-                )
+        notificationPublisher.notifyOffice(
+                organizationId,
+                technician.getId(),
+                NotificationType.SERVICE_REQUEST_ASSIGNED,
+                "New service request assigned",
+                serviceRequest.getTitle()
+                        + " was assigned to "
+                        + technician.getName() + ".",
+                "SERVICE_REQUEST",
+                serviceRequest.getId()
         );
 
         return toResponse(serviceRequest);
@@ -318,44 +316,30 @@ public class ServiceRequestService {
 
         statusHistoryRepository.save(history);
 
+        // The assignment transition has its own SERVICE_REQUEST_ASSIGNED
+        // notification, so skip the generic status-change ping for it.
+        if (toStatus == ServiceRequestStatus.ASSIGNED) {
+            return;
+        }
+
         UserEntity assignedTechnician =
                 serviceRequest.getAssignedTechnician();
 
-        boolean isAssignmentEvent =
-                toStatus == ServiceRequestStatus.ASSIGNED;
-
-        boolean technicianExists =
-                assignedTechnician != null;
-
-        boolean changedByAnotherUser =
-                technicianExists
-                        && !assignedTechnician
-                        .getId()
-                        .equals(changedByUser.getId());
-
-        if (technicianExists
-                && changedByAnotherUser
-                && !isAssignmentEvent) {
-
-            eventPublisher.publishEvent(
-                    new NotificationRequestedEvent(
-                            serviceRequest
-                                    .getOrganization()
-                                    .getId(),
-                            assignedTechnician.getId(),
-                            NotificationType
-                                    .SERVICE_REQUEST_STATUS_CHANGED,
-                            "Service request status changed",
-                            serviceRequest.getTitle()
-                                    + " is now "
-                                    + toStatus.name()
-                                    .toLowerCase()
-                                    .replace("_", " "),
-                            "SERVICE_REQUEST",
-                            serviceRequest.getId()
-                    )
-            );
-        }
+        notificationPublisher.notifyOffice(
+                serviceRequest.getOrganization().getId(),
+                assignedTechnician == null
+                        ? null
+                        : assignedTechnician.getId(),
+                NotificationType.SERVICE_REQUEST_STATUS_CHANGED,
+                "Service request status changed",
+                serviceRequest.getTitle()
+                        + " is now "
+                        + toStatus.name()
+                        .toLowerCase(Locale.ROOT)
+                        .replace("_", " "),
+                "SERVICE_REQUEST",
+                serviceRequest.getId()
+        );
     }
 
     private void validateTechnician(

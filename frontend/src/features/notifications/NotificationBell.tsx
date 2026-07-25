@@ -5,6 +5,7 @@ import {
   useMarkAllNotificationsAsRead,
   useMarkNotificationAsRead,
   useNotifications,
+  useSendTestNotification,
   useUnreadNotificationCount,
 } from "./api/use-notifications";
 
@@ -19,6 +20,8 @@ function NotificationBell() {
   const markReadMutation = useMarkNotificationAsRead();
 
   const markAllReadMutation = useMarkAllNotificationsAsRead();
+
+  const testMutation = useSendTestNotification();
 
   const unreadCount = unreadCountQuery.data ?? 0;
   const notifications = notificationsQuery.data?.content ?? [];
@@ -162,6 +165,19 @@ function NotificationBell() {
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="border-t border-slate-800 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => testMutation.mutate()}
+                disabled={testMutation.isPending}
+                className="text-xs text-slate-400 transition hover:text-orange-300 disabled:opacity-50"
+              >
+                {testMutation.isPending
+                  ? "Sending..."
+                  : "Send test notification"}
+              </button>
             </div>
           </div>
         </>

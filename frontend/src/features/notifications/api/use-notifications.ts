@@ -5,6 +5,7 @@ import {
   getUnreadCount,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  sendTestNotification,
 } from "./notification-api";
 
 const notificationKeys = {
@@ -50,6 +51,20 @@ export function useMarkAllNotificationsAsRead() {
 
   return useMutation({
     mutationFn: markAllNotificationsAsRead,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.all,
+      });
+    },
+  });
+}
+
+export function useSendTestNotification() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: sendTestNotification,
 
     onSuccess: () => {
       queryClient.invalidateQueries({

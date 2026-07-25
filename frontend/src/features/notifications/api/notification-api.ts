@@ -46,3 +46,7 @@ export async function markAllNotificationsAsRead(): Promise<number> {
 
   return response.data.updated;
 }
+
+export async function sendTestNotification(): Promise<void> {
+  await apiClient.post("/notifications/test");
+}

@@ -3,6 +3,8 @@ package com.fixonaut.backend.scheduling;
 import com.fixonaut.backend.common.exception.ConflictException;
 import com.fixonaut.backend.common.exception.ForbiddenException;
 import com.fixonaut.backend.common.exception.ResourceNotFoundException;
+import com.fixonaut.backend.notification.NotificationPublisher;
+import com.fixonaut.backend.notification.NotificationType;
 import com.fixonaut.backend.organization.OrganizationEntity;
 import com.fixonaut.backend.organization.OrganizationRepository;
 import com.fixonaut.backend.security.AuthenticatedUserContext;
@@ -37,6 +39,7 @@ public class SchedulingService {
     private final UserRepository userRepository;
     private final AuthenticatedUserContext
             authenticatedUserContext;
+    private final NotificationPublisher notificationPublisher;
 
     @Transactional
     public AppointmentResponse createAppointment(
@@ -117,9 +120,16 @@ public class SchedulingService {
                         normalizeNullable(request.notes())
                 );
 
-        return toResponse(
-                appointmentRepository.save(appointment)
+        AppointmentEntity saved =
+                appointmentRepository.save(appointment);
+
+        notifyAppointmentEvent(
+                saved,
+                NotificationType.APPOINTMENT_CREATED,
+                "New appointment scheduled"
         );
+
+        return toResponse(saved);
     }
 
     @Transactional
@@ -198,6 +208,12 @@ public class SchedulingService {
 
         appointment.confirm();
 
+        notifyAppointmentEvent(
+                appointment,
+                NotificationType.APPOINTMENT_CONFIRMED,
+                "Appointment confirmed"
+        );
+
         return toResponse(appointment);
     }
 
@@ -213,6 +229,12 @@ public class SchedulingService {
         validateAppointmentActor(appointment);
 
         appointment.start();
+
+        notifyAppointmentEvent(
+                appointment,
+                NotificationType.APPOINTMENT_STARTED,
+                "Appointment started"
+        );
 
         return toResponse(appointment);
     }
@@ -230,6 +252,12 @@ public class SchedulingService {
 
         appointment.complete();
 
+        notifyAppointmentEvent(
+                appointment,
+                NotificationType.APPOINTMENT_COMPLETED,
+                "Appointment completed"
+        );
+
         return toResponse(appointment);
     }
 
@@ -245,6 +273,12 @@ public class SchedulingService {
         validateAppointmentActor(appointment);
 
         appointment.cancel();
+
+        notifyAppointmentEvent(
+                appointment,
+                NotificationType.APPOINTMENT_CANCELLED,
+                "Appointment cancelled"
+        );
 
         return toResponse(appointment);
     }
@@ -470,6 +504,22 @@ public class SchedulingService {
                     "Only the assigned technician can perform this action"
             );
         }
+    }
+
+    private void notifyAppointmentEvent(
+            AppointmentEntity appointment,
+            NotificationType type,
+            String title
+    ) {
+        notificationPublisher.notifyOffice(
+                appointment.getOrganization().getId(),
+                appointment.getTechnician().getId(),
+                type,
+                title,
+                appointment.getServiceRequest().getTitle(),
+                "APPOINTMENT",
+                appointment.getId()
+        );
     }
 
     private AppointmentResponse toResponse(
