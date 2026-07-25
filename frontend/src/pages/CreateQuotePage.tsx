@@ -119,8 +119,6 @@ function CreateQuotePage() {
       const createdQuote = await createQuoteMutation.mutateAsync(request);
 
       navigate(`/quotes/${createdQuote.id}`);
-
-      navigate(`/service-requests/${values.serviceRequestId}`);
     } catch (error) {
       if (isAxiosError(error)) {
         setServerError(

@@ -8,6 +8,7 @@ import {
   getInvoice,
   getInvoices,
   getQuote,
+  getServiceRequestQuotes,
   issueInvoice,
   recordPayment,
   rejectQuote,
@@ -28,6 +29,9 @@ const billingKeys = {
 
   quote: (quoteId: string) => [...billingKeys.all, "quote", quoteId] as const,
 
+  serviceRequestQuotes: (serviceRequestId: string) =>
+    [...billingKeys.all, "service-request-quotes", serviceRequestId] as const,
+
   invoice: (invoiceId: string) =>
     [...billingKeys.all, "invoice", invoiceId] as const,
 
@@ -40,6 +44,14 @@ export function useQuote(quoteId: string) {
     queryKey: billingKeys.quote(quoteId),
     queryFn: () => getQuote(quoteId),
     enabled: Boolean(quoteId),
+  });
+}
+
+export function useServiceRequestQuotes(serviceRequestId: string) {
+  return useQuery({
+    queryKey: billingKeys.serviceRequestQuotes(serviceRequestId),
+    queryFn: () => getServiceRequestQuotes(serviceRequestId),
+    enabled: Boolean(serviceRequestId),
   });
 }
 

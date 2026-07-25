@@ -22,6 +22,16 @@ export async function createQuote(values: CreateQuoteValues): Promise<Quote> {
   return response.data;
 }
 
+export async function getServiceRequestQuotes(
+  serviceRequestId: string,
+): Promise<Quote[]> {
+  const response = await apiClient.get<Quote[]>(
+    `/service-requests/${serviceRequestId}/quotes`,
+  );
+
+  return response.data;
+}
+
 export async function sendQuote(quoteId: string): Promise<Quote> {
   const response = await apiClient.post<Quote>(`/quotes/${quoteId}/send`);
 
